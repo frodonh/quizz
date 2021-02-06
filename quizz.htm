@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8">
+	<meta name="description" content="Quizz OFBet">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<title>OFBET</title>
+	<link rel="stylesheet" href="/templates/ofb/pres/template.css">
+	<link rel="stylesheet" href="quizz.css">
+
+	<!--[if lt IE 9]>
+	<script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+</head>
+<body>
+	<section id="outline" data-background="page_courante.svg" data-animation="convex">
+		<h1>Sommaire</h1>
+		<div class="content"></div>
+	</section>
+
+	<section id="title" data-background="page_garde.svg" data-animation="convex">
+		<h1>
+			OFBET<br/><span class="subtitle" data-variable="subtitle">COMEX</span>
+		</h1>
+		<div class="authordate"><span data-variable="author">L'équipe d'organisation</span><br/><time data-variable="date"></time></div>
+	</section>
+
+	<section data-background="page_courante.svg" data-animation="convex" data-section="Le quizz" data-ssection="Quizz" data-onshow="reset_button">
+		<div class="content plain">
+			<p style="text-align: center; font-size: 150%">Préparez vos tablettes !</p>
+			<div id="qrcode"></div>
+			<button type="button" onclick="reset_answers(event)">Réinitialiser les réponses</button>
+		</div>
+	</section>
+
+	<section id="scores" data-section="Le podium" data-onshow="display_hof">
+		<h1>Scores par équipe</h1>
+		<div class="content">
+		</div>
+	</section>
+
+	<section data-onshow="display_best">
+		<h1>Podium</h1>
+		<div class="content">
+			<figure>
+				<svg style="width: 100%; height: 60vh" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid meet" baseprofile="full" xmlns="http://www.w3.org/2000/svg" version="1.1" style="margin: auto;">
+					<style>
+						@keyframes frombottom {
+							from { transform: scaleY(0) };	
+							to { transform: scaleY(1) };	
+						}
+						@keyframes appear {
+							from { opacity: 0 };	
+							to { opacity: 1 };	
+						}
+					</style>
+					<g style="fill: var(--palettea); transform-origin: bottom center; animation: 2s ease-in-out 0s 1 normal both running frombottom" data-fstart="['invisible']" data-fanim="{'0':'fragment_cssanim'}">
+						<rect x="25" y="200" width="250" height="200" style="fill: var(--palettea)" />
+						<circle cx="150" cy="230" r="20" style="stroke-width: 3; stroke:white; fill: none" />
+						<text x="150" y="230" style="font-size: 20px; fill:white; text-anchor:middle; dominant-baseline: middle">2</text>
+						<text id="points2" x="150" y="270" style="font-size: 20px; fill:white; text-anchor:middle; dominant-baseline: middle"></text>
+						<rect x="275" y="100" width="250" height="300" style="fill: var(--paletteb)" />
+						<circle cx="400" cy="130" r="20" style="stroke-width: 3; stroke:white; fill: none" />
+						<text x="400" y="130" style="font-size: 20px; fill:white; text-anchor:middle; dominant-baseline: middle">1</text>
+						<text id="points1" x="400" y="170" style="font-size: 20px; fill:white; text-anchor:middle; dominant-baseline: middle"></text>
+						<rect x="525" y="300" width="250" height="100" style="fill: var(--palettec)" />
+						<circle cx="650" cy="330" r="20" style="stroke-width: 3; stroke:white; fill: none" />
+						<text x="650" y="330" style="font-size: 20px; fill:white; text-anchor:middle; dominant-baseline: middle">3</text>
+						<text id="points3" x="650" y="370" style="font-size: 20px; fill:white; text-anchor:middle; dominant-baseline: middle"></text>
+					</g>
+					<g style="animation: 1s ease-in 2s 1 normal both running appear" data-fstart="['invisible']" data-fanim="{'0':'fragment_cssanim'}">
+						<foreignObject x="35" y="0" width="230" height="180">
+							<body xmlns="http://www.w3.org/1999/xhtml" style="height: 180px;">
+								<div id="podium2" style="position: absolute; left: 0; bottom:0; width: 230px; max-height: 175px; overflow-y:auto; font: bold 12px sans-serif; text-align: center">
+								</div>
+							</body>
+						</foreignObject>
+						<foreignObject x="285" y="0" width="230" height="80">
+							<body xmlns="http://www.w3.org/1999/xhtml" style="height: 80px;" >
+								<div id="podium1" style="position: absolute; left: 0; bottom: 0; width: 230px; max-height: 75px; overflow-y:auto; font: bold 12px sans-serif; text-align: center">
+								</div>
+							</body>
+						</foreignObject>
+						<foreignObject x="535" y="0" width="230" height="280">
+							<body xmlns="http://www.w3.org/1999/xhtml" style="height: 280px" >
+								<div id="podium3" style="position: absolute; left: 0; bottom: 0; width: 230px; max-height: 275px; overflow-y:auto; font: bold 12px sans-serif; text-align: center">
+								</div>
+							</body>
+						</foreignObject>
+					</g>
+				</svg>
+			</figure>
+		</div>
+	</section>
+</body>
+<script src="quizz.js"></script>
+<script src="/templates/slides/slides.js"></script>
+</html>

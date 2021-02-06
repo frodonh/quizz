@@ -1,0 +1,181 @@
+@import "/home/francois/Modèles/ofb/pres/_colors.scss";
+
+@mixin button {
+	background-color: $palettea;
+	color: white;
+	border: none;
+	padding: 1em 0.3em;
+	width: 100%;
+}
+
+div.qcontent {
+	border-width: 0.6vh 0;
+	border-style: solid;
+	border-color: var(--palettea);
+	padding: 1.2vw 2.4vw;
+	margin: 0 5vw 6vh 5vw;
+	min-height: 0;
+	display:flex;
+	flex-flow: column nowrap;
+	flex: auto;
+
+	&.withcontent {
+		flex: auto;
+		display: flex;
+		flex-flow: row wrap;
+		justify-content: space-evenly;
+		align-items: center;
+
+		div.media {
+			max-width: 40vw;
+
+			img {
+				max-width: 40vw;
+			}
+		}
+
+		div.options {
+			width: 40vw;
+
+			div.option {
+				height: 12vh;
+				font-size: 70%;
+				margin: 1vh 1vw;
+			}
+		}
+	}
+}
+
+div.options {
+	flex: auto;
+	display: flex;
+	flex-flow: row wrap;
+	justify-content: space-evenly;
+	align-items: center;
+}
+
+div.option {
+	width: 36vw;
+	height: 21vh;
+	border-radius: 5px;
+	margin: 1vh 3vw;
+	position: relative;
+	cursor: pointer;
+
+	&:first-child { background-color: $palettea; }
+	&:nth-child(2) { background-color: $paletteb; }
+	&:nth-child(3) { background-color: $palettec; }
+	&:nth-child(4) { background-color: $paletted; }
+	&:nth-child(5) { background-color: $palettee; }
+	&:nth-child(6) { background-color: $palettef; }
+
+	div {
+		margin: 0;
+		width: 95%;
+		text-align: center;
+		top: 50%;
+		left: 50%;
+		color: white;
+		position: absolute;
+		transform: translate(-50%,-50%);
+	}
+}
+
+button {
+	@include button;
+
+	&.done {
+		background-color: $paletteb;
+		position: relative;
+		&::after {
+			position: absolute;
+			top: 50%;
+			right: 1em;
+			transform: translate(0,-50%);
+			color: white;
+			font-weight: bold;
+			font-size: 130%;
+			content: "✓";
+		}
+	}
+}
+
+@keyframes pies {
+	from {stroke-dasharray: 0 0 0 628.32;}
+}
+
+div.scorequestion {
+	border-width: 0.6vh 0;
+	border-style: solid;
+	border-color: $palettea;
+	padding: 1.2vw 1vw;
+	margin: 0 1vw 6vh 1vw;
+	min-height: 0;
+	flex: auto;
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: center;
+	justify-content: space-between;
+
+	& > div:first-child {
+		max-width: 28%;
+		max-height: 60vh;
+		flex: initial;
+	}
+
+	& > div:nth-child(2) {
+		width: 29%;
+
+		table {
+			border: unset;
+			border-collapse: separate;
+
+			tr.goodanswer > td {
+				&:first-child {
+					border-style: solid none solid solid;
+					border-width: 2px 0 2px 2px;
+					border-color: $paletteb rgba(0,0,0,0) $paletteb $paletteb;
+				}
+				&:last-child {
+					border-style: solid solid solid none;
+					border-width: 2px 2px 2px 0;
+					border-color: $paletteb $paletteb $paletteb rgba(0,0,0,0);
+				}
+			}
+
+			tr > td {
+				border: 2px solid rgba(0,0,0,0);
+
+				&:first-child {
+					div {
+						width: 2em;
+						height: 1em;
+					}
+				}
+
+				&:last-child {
+					text-align: left;
+					font-size: 80%;
+				}
+			}
+		}
+	}
+
+	& > div:last-child {
+		width: 45%;
+		flex: initial;
+		display: flex;
+		flex-flow: row wrap;
+		align-items: center;
+		justify-content: space-evenly;
+	}
+
+}
+
+@keyframes kfbars {
+	from {transform: scaleY(0);}
+}
+
+@keyframes kfappear {
+	from {opacity: 0;}
+}

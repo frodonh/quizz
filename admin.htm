@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>La machine à paires</title>
+	<link rel="stylesheet" href="styles.css">
+	<script>
+		function action(event) {
+			let log=document.getElementById('log');
+			let table=document.getElementById('view');
+			log.innerHTML='En cours';
+			table.innerHTML='';
+			let xhttp=new XMLHttpRequest();
+			xhttp.open('POST',"agents.php");
+			xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+			xhttp.onload=function(){
+				if (event.target.dataset['action']=='view_pairs') {
+					log.innerHTML="";
+					let pairs=JSON.parse(xhttp.responseText);
+					for (const pair of pairs) {
+						let tr=document.createElement('tr');
+						tr.innerHTML='<td>'+pair[0]+'</td><td>'+pair[1]+'</td>';
+						table.appendChild(tr);
+					}
+				} else log.innerHTML=xhttp.responseText;
+			};
+			xhttp.send("action="+event.target.dataset['action']);
+		}
+	</script>
+</head>
+<body>
+	<h1>Administration</h1>
+	<button data-action="reset_pres" type="button" onclick="action(event)">Réinitialiser les présences</button>
+	<button data-action="reset_pairs" type="button" onclick="action(event)">Réinitialiser les paires</button>
+	<button data-action="shuffle" type="button" onclick="action(event)">Générer des paires</button>
+	<button data-action="view_pairs" type="button" onclick="action(event)">Voir les paires</button>
+	<p id="log"></p>
+	<table id="view">
+	</table>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<svg baseprofile="full" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 300 168" preserveAspectRatio="xMidYMidMeet">
+	<defs>
+		<linearGradient id="ofbetgradient">
+			<stop offset="0%" stop-color="#256f22" />
+			<stop offset="50%" stop-color="#358a2d" />
+			<stop offset="100%" stop-color="#256f22" />
+		</linearGradient>
+	</defs>
+	<style>
+		.ofbetcircles {
+			fill: #3dac34;
+			stroke: none;
+		}
+		.ofbettext {
+			stroke: none;
+			fill: white;
+			font-family: sans-serif;
+			text-anchor: middle;
+			dominant-baseline: middle;
+		}
+		.ofbetglyphs {
+			font-size: 25px;
+			font-weight: bold;
+			transform: translateY(3px);
+		}
+	</style>
+	<rect x="0" y="0" width="300" height="168" stroke="none" fill="url(#ofbetgradient)" />
+	<g transform="translate(76 75) rotate(-15)">
+		<circle r="17" class="ofbetcircles" />
+		<text class="ofbettext ofbetglyphs">O</text>
+	</g>
+	<g transform="translate(113 75) rotate(15)">
+		<circle r="17" class="ofbetcircles" />
+		<text class="ofbettext ofbetglyphs">F</text>
+	</g>
+	<g transform="translate(150 75) rotate(-15)">
+		<circle r="17" class="ofbetcircles" />
+		<text class="ofbettext ofbetglyphs">B</text>
+	</g>
+	<g transform="translate(187 75) rotate(15)">
+		<circle r="17" class="ofbetcircles" />
+		<text class="ofbettext ofbetglyphs">E</text>
+	</g>
+	<g transform="translate(224 75) rotate(-15)">
+		<circle r="17" class="ofbetcircles" />
+		<text class="ofbettext ofbetglyphs">T</text>
+	</g>
+	<text x="150" y="107" class="ofbettext" style="font-size: 20px">Pariez sur le vivant</text>
+</svg>
+

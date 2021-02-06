@@ -1,0 +1,185 @@
+@import "/home/francois/Modèles/ofb/pres/_colors.scss";
+@import "./quizz.scss";
+
+* {
+	box-sizing: border-box;
+}
+
+h1 {
+	text-align: center;
+	font-size: 150%;
+}
+
+body,form#login {
+	margin: 0 auto;
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: stretch;
+
+	& > * {
+		flex: initial;
+		margin-top: 1em;
+	}
+}
+
+body {
+	height: 100vh;
+	margin: 0;
+	background-image: url("fond.svg");
+	background-size: 100% 100%;
+	background-attachment: fixed;
+}
+
+form#login {
+	.autocomplete {
+		position: relative;
+	}
+
+	.autocomplete-items {
+		background-color: white;
+		position: absolute;
+		border: 1px solid $palettea;
+		border-bottom: none;
+		border-top: none;
+		z-index: 2;
+		top: 100%;
+		left: 0;
+		right: 0;
+
+		div {
+			padding: 0.5em 0.2em;
+			cursor: pointer;
+			background-color: white;
+			border-bottom: 1px solid $palettea;
+
+			&:hover {
+				background-color: $palettea;
+				color: white;
+			}
+		}
+	}
+
+	input,button {
+		max-width: 30em;
+		padding: 1em 0.3em;
+	}
+
+	p {
+		text-align: center;
+		color: red;
+		display: none;
+	}
+}
+
+div.fiche {
+	border: 1px solid black;
+	border-radius: 5px;
+	background-color: $palettele;
+	margin-top: 1em;
+	position: relative;
+	p {display: none;}
+
+	p.service {
+		text-align: center;
+		font-weight: bold;
+	}
+
+	p.fonction {
+		text-align: center;
+		font-style: italic;
+	}
+
+	p.site {
+		text-align: center;
+	}
+
+	.button {
+		position: absolute;
+		background-color: $palettea;
+		border-style: none;
+		border-radius: 0.2em;
+		text-align: center;
+		right: 0.2em;
+		top: 0.1em;
+		color: white;
+		width: 1.4em;
+		height: 1.2em;
+		padding: 0.1em;
+
+		&:hover {
+			box-shadow: 2px 2px 4px 2px gray;
+		}
+
+		&::before {content: "▼"; }
+	}
+
+	&.expanded {
+		p {display:block;}
+		.button::before { content: "▲"; }
+	}
+
+	&.equipe0 { background-color: $palettela;}
+	&.equipe1 { background-color: $palettelb;}
+	&.equipe2 { background-color: $palettelc;}
+	&.equipe3 { background-color: $paletteld;}
+}
+
+div.question {
+	font-weight: bold;
+	font-size: 120%;
+	text-align: center;
+	color: $paletteb;
+}
+
+.fg-equipe0 { color: $palettea;}
+.fg-equipe1 { color: $paletteb;}
+.fg-equipe2 { color: $palettec;}
+.fg-equipe3 { color: $paletted;}
+
+table.equipe {
+	font-size: 80%;
+	width: 100%;
+	border-collapse: collapse;
+
+	thead > tr {
+		th {
+			color: white;
+			font-weight: bold;
+			font-size: 120%;
+			text-align: left;
+		}
+	}
+
+	th,td {
+		padding: 0.4em 0.2em 0.4em 0.2em;
+	}
+
+	tbody {
+		border-bottom-left-radius: 10px;
+		border-bottom-right-radius: 10px;
+
+		tr:nth-child(even) {
+		}
+
+		tr:nth-child(odd) {
+			background-color: white;
+		}
+	}
+}
+
+table.equipe0 {
+	thead > tr th {background-color: $palettea;}
+	tbody tr:nth-child(even) {background-color: $palettela;}
+}
+table.equipe1 {
+	thead > tr th {background-color: $paletteb;}
+	tbody tr:nth-child(even) {background-color: $palettelb;}
+}
+table.equipe2 {
+	thead > tr th {background-color: $palettec;}
+	tbody tr:nth-child(even) {background-color: $palettelc;}
+}
+table.equipe3 {
+	thead > tr th {background-color: $paletted;}
+	tbody tr:nth-child(even) {background-color: $paletteld;}
+}

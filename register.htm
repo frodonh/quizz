@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Séminaire DSUED</title>
+	<link rel="stylesheet" href="styles.css">
+	<style>
+		label.required::after {
+			content: '*';
+			color: red;
+		}
+	</style>
+</head>
+<body>
+	<h1>Je m'enregistre</h1>
+	<form id="login" autocomplete="off">
+		<label for="name" class="required">Nom</label><input type="text" id="name" size="50" placeholder="LUCAS" required>
+		<label for="fname" class="required">Prénom</label><input type="text" id="fname" size="50" placeholder="George" required>
+		<label for="service">Entité</label><input type="text" id="service" size="50" placeholder="DGD Movies">
+		<label for="service">Sous-entité</label><input type="text" id="unit" size="50" placeholder="Direction Hollywood">
+		<label for="function">Intitulé du poste</label><input type="text" id="function" size="200" placeholder="Producteur réalisateur" required>
+		<label for="location">Site</label><input type="text" id="location" size="40" placeholder="New-York">
+		<p>Échec de connexion</p>
+		<button id="ok" type="button">Ok</button>
+	</form>
+</body>
+<script src="register.js"></script>
+</html>
+
