@@ -1,4 +1,5 @@
 var questions;
+var game;
 const colors=["var(--palettea)","var(--paletteb)","var(--palettec)","var(--paletted)","var(--palettee)","var(--palettef)"];
 const ncolors=["Bleus","Verts","Fuchsia","Orange","Gris"];
 
@@ -14,7 +15,7 @@ function reset_answers(event) {
 	xhttp.open('POST','quizz.php',true);
 	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 	xhttp.onload=() => button.classList.add('done');
-	xhttp.send('action=reset');
+	xhttp.send('reset='+game);
 	button.disabled=true;
 }
 
@@ -22,14 +23,14 @@ function enter_current(slide) {
 	let xhttp=new XMLHttpRequest();
 	xhttp.open('POST','quizz.php',true);
 	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-	xhttp.send('set='+slide.dataset['question']);
+	xhttp.send('set='+slide.dataset['question']+'&game='+game);
 }
 
 function exit_current(slide) {
 	let xhttp=new XMLHttpRequest();
 	xhttp.open('POST','quizz.php',true);
 	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-	xhttp.send('set=NULL');
+	xhttp.send('set=NULL&game='+game);
 }
 
 function create_pie(byanswer,total) {
@@ -60,7 +61,7 @@ function create_pie(byanswer,total) {
 }
 
 function display_stats(slide) {
-	const question=questions[slide.dataset['question']];
+	const question=questions.find(x=>x['id']==slide.dataset['question']);
 	let xhttp=new XMLHttpRequest();
 	xhttp.open('POST','quizz.php',true);
 	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
@@ -136,7 +137,7 @@ function display_stats(slide) {
 		div.appendChild(legenddiv);
 		div.appendChild(tpiediv);
 	};
-	xhttp.send('stats-answer='+question['id']);
+	xhttp.send('stats-answer='+question['id']+'&game='+game);
 }
 
 function display_hof(slide) {
@@ -147,12 +148,7 @@ function display_hof(slide) {
 		// Prepare data
 		const answers=JSON.parse(this.responseText);
 		if (!answers) return;
-		let scores=[];
-		for (const question_team of answers) {
-			let tscore=0;
-			for (const question_score of Object.values(question_team)) tscore+=(3*question_score[0]-question_score[1]);
-			scores.push(tscore);
-		}
+		const scores=answers.map(x=>parseInt(x));
 		let minscore=0;
 		let maxscore=0;
 		for (const score of scores) {
@@ -232,10 +228,16 @@ function display_hof(slide) {
 		div.innerHTML='';
 		div.appendChild(svg);
 	};
-	xhttp.send('action=stats-teams');
+	xhttp.send('stats-teams='+game);
 }
 
 function display_best(slide) {
+	// Signal all participants the game has ended so that their screen displays their score
+	let xhttp2=new XMLHttpRequest();
+	xhttp2.open('POST','quizz.php',true);
+	xhttp2.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+	xhttp2.send('set=-1&game='+game);
+	// Get podium
 	let xhttp=new XMLHttpRequest();
 	xhttp.open('POST','quizz.php',true);
 	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
@@ -247,58 +249,69 @@ function display_best(slide) {
 			if (best.length<=i) break;
 			let tex=document.getElementById('podium'+(i+1));
 			let s='';
-			for (const nom of best[i][1]) {
+			for (const nom of best[i]["noms"]) {
 				s=s+nom+'<br/>';
 			}
 			tex.innerHTML=s;
 			let pts=document.getElementById('points'+(i+1));
-			pts.textContent=best[i][0]+' points';
+			pts.textContent=best[i]["score"]+' points';
 		}
 	};
-	xhttp.send('action=best-agents');
+	xhttp.send('best-agents='+game);
 }
 
 function onSlidesStart(resolve,reject) {
+	// Read query string
+	let querys=decodeURI(location.search.substr(1)).split('&');
+	let parameters=[];
+	for (let i=0;i<querys.length;++i) {
+		let varval=querys[i].split('=');
+		parameters[varval[0]]=varval[1];
+	}
+	game='1';
+	if ('game' in parameters && parameters['game']!='') game=parameters['game'];
 	// QR-Code
-	let uri=window.location.protocol+'//'+window.location.hostname+window.location.pathname.replace(/(.*)\/[^/]*$/,'$1/qpc.htm');
+	let uri=window.location.protocol+'//'+window.location.hostname+window.location.pathname.replace(/(.*)\/[^/]*$/,'$1/qpc.htm')+'/game='+game;
 	let encodeduri=encodeURIComponent(uri);
 	let qr=document.getElementById('qrcode');
 	qr.innerHTML='<p style="text-align:center">Jouez sur : <a href="'+uri+'">'+uri+'</a></p><figure class="centered" style="width:80vw; height:70vh; margin: 20px auto"><img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data='+encodeduri+'" style="max-width: 100%; height:100%" /></figure>';
 	// Load questions
 	let xhttp=new XMLHttpRequest();
-	xhttp.open('GET','quizz.json',true);
+	xhttp.open('POST','quizz.php',true);
+	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 	xhttp.onload=function() {
 		let podslide=document.getElementById('scores');
 		// Ajoute les questions
-		questions=JSON.parse(this.responseText);
-		for (let i=0;i<questions.length;++i) if (!questions[i]['hidden']) {
-			questions[i]['id']=i;
+		let quizz=JSON.parse(this.responseText);
+		document.querySelector('[data-variable="subtitle"]').innerHTML=quizz['name'];
+		questions=quizz['questions'];
+		for (const question of questions) {
 			// Question
 			let slide=document.createElement('section');
 			slide.dataset['onshow']='enter_current';
 			slide.dataset['onhide']='exit_current';
-			slide.dataset['question']=''+i;
-			slide.dataset['numfragment']=''+(questions[i]['options'].length);
+			slide.dataset['question']=question['id'];
+			slide.dataset['numfragment']=''+(question['options'].length);
 			let title=document.createElement('h1');
-			title.innerHTML=questions[i]['question'];
+			title.innerHTML=question['question'];
 			slide.appendChild(title);
 			let content=document.createElement('div');
 			content.classList.add('qcontent');
-			if ('media' in questions[i]) {
+			if ('media' in question && question['media']!='') {
 				content.classList.add('withcontent');
 				let media=document.createElement('div');
 				media.classList.add('media');
-				media.innerHTML=questions[i]['media'];
+				media.innerHTML=question['media'];
 				content.appendChild(media);
 			}
 			let options=document.createElement('div');
 			options.classList.add('options');
-			for (let j=0;j<questions[i]['options'].length;++j) {
+			for (let j=0;j<question['options'].length;++j) {
 				let div=document.createElement('div');
 				div.classList.add('option');
 				div.dataset['fragment']="{'0-"+j+"':['invisible']}";
 				let innerdiv=document.createElement('div');
-				innerdiv.innerHTML=questions[i]['options'][j];
+				innerdiv.innerHTML=question['options'][j];
 				div.appendChild(innerdiv);
 				options.appendChild(div);
 			}
@@ -306,27 +319,27 @@ function onSlidesStart(resolve,reject) {
 			slide.appendChild(content);
 			document.body.insertBefore(slide,podslide);
 			// Explication
-			if (questions[i]["explain"]) {
+			if (question["explain"] && question["explain"]["text"]) {
 				slide=document.createElement('section');
 				title=document.createElement('h1');
-				title.innerHTML=questions[i]['question'];
+				title.innerHTML=question['question'];
 				slide.appendChild(title);
 				let content=document.createElement('div');
 				content.classList.add('content');
 				let block=document.createElement('div');
 				block.classList.add("block");
 				let btitle=document.createElement("h1");
-				btitle.innerHTML=questions[i]["options"][questions[i]["answer"]];
+				btitle.innerHTML=question["options"][question["answer"]];
 				block.appendChild(btitle);
 				let bcontent=document.createElement("div");
 				bcontent.classList.add('content');
-				bcontent.innerHTML=questions[i]["explain"]["text"];
+				bcontent.innerHTML=question["explain"]["text"];
 				block.appendChild(bcontent);
 				content.appendChild(block);
-				if (questions[i]["explain"]["link"]) {
+				if (question["explain"]["link"]) {
 					let p=document.createElement('p');
 					p.style.textAlign="center";
-					p.innerHTML='<a target="_blank" href="'+questions[i]["explain"]["link"]+'">'+questions[i]["explain"]["link"]+'<a>';
+					p.innerHTML='<a target="_blank" href="'+question["explain"]["link"]+'">'+question["explain"]["link"]+'<a>';
 					content.appendChild(p);
 				}
 				slide.appendChild(content);
@@ -334,11 +347,11 @@ function onSlidesStart(resolve,reject) {
 			}
 			// Statistiques
 			slide=document.createElement('section');
-			slide.dataset['question']=''+i;
+			slide.dataset['question']=question['id'];
 			slide.dataset['numfragment']='1';
 			slide.dataset['onshow']='display_stats';
 			title=document.createElement('h1');
-			title.innerHTML=questions[i]['question'];
+			title.innerHTML=question['question'];
 			slide.appendChild(title);
 			content=document.createElement('div');
 			content.classList.add('scorequestion');
@@ -347,5 +360,5 @@ function onSlidesStart(resolve,reject) {
 		}
 		resolve();
 	}
-	xhttp.send();
+	xhttp.send('get_quizz='+game);
 }

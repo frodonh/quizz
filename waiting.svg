@@ -14,6 +14,6 @@
 		<animateTransform attributeName="transform" dur="2s" type="rotate" from="0 50 50" to="360 50 50" repeatCount="indefinite" />
 	</line>
 	<line class="waiterlines" x1="50" y1="50" x2="49.5" y2="74">
-		<animateTransform attributeName="transform" dur="15s" type="rotate" from="0 50 50" to="360 50 50" repeatCount="indefinite" />
+		<animateTransform attributeName="transform" dur="24s" type="rotate" from="0 50 50" to="360 50 50" repeatCount="indefinite" />
 	</line>
 </svg>

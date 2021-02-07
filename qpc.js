@@ -4,6 +4,7 @@ var agentid;
 var timerid=null;
 var answered=[];
 var xDown=null,xUp=null,yDown=null,yUp=null;
+var game;
 
 /**********************************
  *       General functions        *
@@ -25,9 +26,28 @@ function to_current_state() {
 	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 	xhttp.onload=function() {
 		let current=parseInt(this.responseText);
-		if (isNaN(current) || answered[current]!=null) to_waiting_page(); else display(current);
+		if (isNaN(current) || answered[current]!=null) to_waiting_page(); else {
+			if (current>=0) display(current); else to_score_page();
+		}
 	}
-	xhttp.send('action=current');
+	xhttp.send('current='+game);
+}
+
+function to_score_page() {
+	if (timerid) clearInterval(timerid);
+	let xhttp=new XMLHttpRequest();
+	xhttp.open('POST','quizz.php',true);
+	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+	xhttp.onload=function() {
+		let score=parseInt(this.responseText);
+		if (isNaN(score)) return;
+		const questiondiv=document.getElementById('question');
+		const optionsdiv=document.getElementById('options');
+		questiondiv.innerHTML='Félicitations !';
+		optionsdiv.style.fontSize='200%';
+		optionsdiv.innerHTML='Vous avez marqué '+score+ ' points';
+	}
+	xhttp.send('get-my-score='+agentid+'&game='+game);
 }
 
 function handle_answer_click(event) {
@@ -38,22 +58,23 @@ function handle_answer_click(event) {
 	xhttp.open('POST','quizz.php',true);
 	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 	xhttp.onload=to_waiting_page;
-	xhttp.send('agent='+agentid+'&question='+id+'&answer='+ans);
+	xhttp.send('agent='+agentid+'&question='+id+'&answer='+ans+'&game='+game);
 }
 
 function display(id) {
 	if (currentstatus==id) return;
 	const questiondiv=document.getElementById('question');
 	const optionsdiv=document.getElementById('options');
-	questiondiv.innerHTML=questions[id]['question'];
+	const question=questions.find(x=>x['id']==id);
+	questiondiv.innerHTML=question['question'];
 	questiondiv.dataset['question']=''+id;
 	optionsdiv.innerHTML='';
-	for (let i=0;i<questions[id]['options'].length;++i) {
+	for (let i=0;i<question['options'].length;++i) {
 		let div=document.createElement('div');
 		div.classList.add('option');
 		div.dataset['option']=''+i;
 		let innerdiv=document.createElement('div');
-		innerdiv.innerHTML=questions[id]['options'][i];
+		innerdiv.innerHTML=question['options'][i];
 		div.appendChild(innerdiv);
 		div.addEventListener('click',handle_answer_click);
 		optionsdiv.appendChild(div);
@@ -104,15 +125,26 @@ function handleTouchEnd(evt) {
  *       Main event loop          *
  **********************************/
 document.addEventListener("DOMContentLoaded",function(event) {
+	// Read query string
+	let querys=decodeURI(location.search.substr(1)).split('&');
+	let parameters=[];
+	for (let i=0;i<querys.length;++i) {
+		let varval=querys[i].split('=');
+		parameters[varval[0]]=varval[1];
+	}
+	game='1';
+	if ('game' in parameters && parameters['game']!='') game=parameters['game'];
+	// Load quizz
 	let xhttp=new XMLHttpRequest();
-	xhttp.open('GET','quizz.php',true);
+	xhttp.open('POST','quizz.php',true);
+	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 	xhttp.onreadystatechange=function() {
 		if (this.readyState==XMLHttpRequest.DONE && this.status==200) {
 			questions=JSON.parse(this.responseText);
 			to_current_state();
 		}
 	}
-	xhttp.send();
+	xhttp.send('quizz='+game);
 	// Get agent id from cookie
 	const cookies=document.cookie;
 	const pos=cookies.indexOf('semid=')+6;
