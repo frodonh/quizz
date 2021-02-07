@@ -271,7 +271,7 @@ function onSlidesStart(resolve,reject) {
 	game='1';
 	if ('game' in parameters && parameters['game']!='') game=parameters['game'];
 	// QR-Code
-	let uri=window.location.protocol+'//'+window.location.hostname+window.location.pathname.replace(/(.*)\/[^/]*$/,'$1/qpc.htm')+'/game='+game;
+	let uri=window.location.protocol+'//'+window.location.hostname+window.location.pathname.replace(/(.*)\/[^/]*$/,'$1/qpc.htm')+'?game='+game;
 	let encodeduri=encodeURIComponent(uri);
 	let qr=document.getElementById('qrcode');
 	qr.innerHTML='<p style="text-align:center">Jouez sur : <a href="'+uri+'">'+uri+'</a></p><figure class="centered" style="width:80vw; height:70vh; margin: 20px auto"><img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data='+encodeduri+'" style="max-width: 100%; height:100%" /></figure>';

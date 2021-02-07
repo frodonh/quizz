@@ -14,12 +14,14 @@ function get_quizz($full,$num) {
 		$name=pg_fetch_row($res);
 		$name=$name[0];
 		pg_free_result($res);
-		$res=pg_query_params("select id,question,array_to_json(answers) as options,answer,explain_text,explain_link,media from (select unnest(questions) as que from seminaire.games where id=$1) as qu inner join seminaire.questions on questions.id=que",array($num)) or die('Request failed: '.pg_last_error());
+		$res=pg_query_params("select id,question,answers as options,answer,explain_text,explain_link,media from (select unnest(questions) as que from seminaire.games where id=$1) as qu inner join seminaire.questions on questions.id=que",array($num)) or die('Request failed: '.pg_last_error());
 	} else {
-		$res=pg_query_params("select id,question,array_to_json(answers) as options from (select unnest(questions) as que from seminaire.games where id=$1) as qu inner join seminaire.questions on questions.id=que",array($num)) or die('Request failed: '.pg_last_error());
+		$res=pg_query_params("select id,question,answers as options from (select unnest(questions) as que from seminaire.games where id=$1) as qu inner join seminaire.questions on questions.id=que",array($num)) or die('Request failed: '.pg_last_error());
 	}
 	$quizz=pg_fetch_all($res);
 	foreach ($quizz as $key=>$question) {
+		$quizz[$key]['options'][0]='[';
+		$quizz[$key]['options'][strlen($quizz[$key]['options'])-1]=']';
 		$quizz[$key]['options']=json_decode($quizz[$key]['options']);
 		if ($full) {
 			if ($quizz[$key]['explain_text']!=NULL && strlen($quizz[$key]['explain_text'])>0) {
@@ -110,9 +112,11 @@ elseif (array_key_exists('stats-units',$_POST)) {	// Statistiques des services
 }
 elseif (array_key_exists('best-agents',$_POST)) {	// Podium des trois agents avec les scores les plus élevés
 	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
-	$res=pg_query_params("select score,array_to_json(array_agg(nom)) as noms from (select concat(prenom,' ',nom) as nom,seminaire.score((select count(*) from seminaire.answers inner join seminaire.questions on questions.id=answers.question where answers.answer=questions.answer and answers.agent=ag.id and game=$1)::integer,(select count(*) from seminaire.answers inner join seminaire.questions on questions.id=answers.question where answers.answer!=questions.answer and answers.agent=ag.id and game=$1)::integer) as score from seminaire.agents as ag group by id,prenom,nom) as foo group by score order by score desc limit 3;",array($_POST['best-agents'])) or die('Request failed: '.pg_last_error());
+	$res=pg_query_params("select score,array_agg(nom) as noms from (select concat(prenom,' ',nom) as nom,seminaire.score((select count(*) from seminaire.answers inner join seminaire.questions on questions.id=answers.question where answers.answer=questions.answer and answers.agent=ag.id and game=$1)::integer,(select count(*) from seminaire.answers inner join seminaire.questions on questions.id=answers.question where answers.answer!=questions.answer and answers.agent=ag.id and game=$1)::integer) as score from seminaire.agents as ag group by id,prenom,nom) as foo group by score order by score desc limit 3;",array($_POST['best-agents'])) or die('Request failed: '.pg_last_error());
 	$answers=pg_fetch_all($res);
 	foreach ($answers as $key=>$answer) {
+		$answers[$key]['noms'][0]='[';
+		$answers[$key]['noms'][strlen($answers[$key]['noms'])-1]=']';
 		$answers[$key]['noms']=json_decode($answers[$key]['noms']);
 	}
 	header("Content-Type: application/json");
