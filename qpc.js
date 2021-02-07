@@ -116,6 +116,7 @@ document.addEventListener("DOMContentLoaded",function(event) {
 	// Get agent id from cookie
 	const cookies=document.cookie;
 	const pos=cookies.indexOf('semid=')+6;
+	if (pos==5) window.location.href="login.htm";
 	const endpos=cookies.indexOf(';',pos);
 	if (endpos==-1) agentid=cookies.substring(pos);
 	else agentid=cookies.substring(pos,endpos); 

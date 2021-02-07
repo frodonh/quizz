@@ -15,7 +15,7 @@ function submit(event) {
 			let id=parseInt(res);
 			let d=new Date();
 			d.setTime(d.getTime()+2*24*3600*1000);
-			document.cookie="semid="+id+"; expires="+d.toUTCString()+"; path=/";
+			document.cookie="semid="+id+"; expires="+d.toUTCString()+"; path=/; SameSite=Lax";
 			window.location.href="home.php";
 		} else if (res.startsWith("KO")) {
 			event.target.parentNode.getElementsByTagName('p')[0].style.display="block";

@@ -260,10 +260,10 @@ function display_best(slide) {
 
 function onSlidesStart(resolve,reject) {
 	// QR-Code
-	let uri=window.location.protocol+'//'+window.location.hostname+window.location.pathname+window.location.search;
+	let uri=window.location.protocol+'//'+window.location.hostname+window.location.pathname.replace(/(.*)\/[^/]*$/,'$1/qpc.htm');
 	let encodeduri=encodeURIComponent(uri);
 	let qr=document.getElementById('qrcode');
-	qr.innerHTML='<p style="text-align:center">Retrouvez cette présentation sur :<br/><a href="'+uri+'">'+uri+'</a></p><figure class="centered"><img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data='+encodeduri+'" /></figure>';
+	qr.innerHTML='<p style="text-align:center">Jouez sur : <a href="'+uri+'">'+uri+'</a></p><figure class="centered" style="width:80vw; height:70vh; margin: 20px auto"><img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data='+encodeduri+'" style="max-width: 100%; height:100%" /></figure>';
 	// Load questions
 	let xhttp=new XMLHttpRequest();
 	xhttp.open('GET','quizz.json',true);
