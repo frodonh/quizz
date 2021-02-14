@@ -61,7 +61,7 @@ function create_pie(byanswer,total) {
 }
 
 function display_stats(slide) {
-	const question=questions.find(x=>x['id']==slide.dataset['question']);
+	const question=questions.find(x=>x['cd_question']==slide.dataset['question']);
 	let xhttp=new XMLHttpRequest();
 	xhttp.open('POST','quizz.php',true);
 	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
@@ -120,7 +120,7 @@ function display_stats(slide) {
 		let table=document.createElement('table');
 		for (let i=0;i<num;++i) {
 			let entry=document.createElement('tr');
-			if (i==question['answer']) entry.dataset['fragment']='{"1":["goodanswer"]}';
+			if (i==question['right_answer']) entry.dataset['fragment']='{"1":["goodanswer"]}';
 			let tda=document.createElement('td');
 			let colordiv=document.createElement('div');
 			colordiv.style.backgroundColor=colors[i];
@@ -137,7 +137,7 @@ function display_stats(slide) {
 		div.appendChild(legenddiv);
 		div.appendChild(tpiediv);
 	};
-	xhttp.send('stats-answer='+question['id']+'&game='+game);
+	xhttp.send('stats-answer='+question['cd_question']+'&game='+game);
 }
 
 function display_hof(slide) {
@@ -281,7 +281,7 @@ function onSlidesStart(resolve,reject) {
 	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 	xhttp.onload=function() {
 		let podslide=document.getElementById('scores');
-		// Ajoute les questions
+		// Add questions
 		let quizz=JSON.parse(this.responseText);
 		document.querySelector('[data-variable="subtitle"]').innerHTML=quizz['name'];
 		questions=quizz['questions'];
@@ -290,14 +290,14 @@ function onSlidesStart(resolve,reject) {
 			let slide=document.createElement('section');
 			slide.dataset['onshow']='enter_current';
 			slide.dataset['onhide']='exit_current';
-			slide.dataset['question']=question['id'];
+			slide.dataset['question']=question['cd_question'];
 			slide.dataset['numfragment']=''+(question['options'].length);
 			let title=document.createElement('h1');
 			title.innerHTML=question['question'];
 			slide.appendChild(title);
 			let content=document.createElement('div');
 			content.classList.add('qcontent');
-			if ('media' in question && question['media']!='') {
+			if ('media' in question && question['media']!=null && question['media']!='') {
 				content.classList.add('withcontent');
 				let media=document.createElement('div');
 				media.classList.add('media');
@@ -318,8 +318,8 @@ function onSlidesStart(resolve,reject) {
 			content.appendChild(options);
 			slide.appendChild(content);
 			document.body.insertBefore(slide,podslide);
-			// Explication
-			if (question["explain"] && question["explain"]["text"]) {
+			// Explaination
+			if (question["explain"] && question['explain']!=null && (question["explain"]["text"] || question["explain"]["media"] || question["explain"]["link"])) {
 				slide=document.createElement('section');
 				title=document.createElement('h1');
 				title.innerHTML=question['question'];
@@ -329,25 +329,33 @@ function onSlidesStart(resolve,reject) {
 				let block=document.createElement('div');
 				block.classList.add("block");
 				let btitle=document.createElement("h1");
-				btitle.innerHTML=question["options"][question["answer"]];
+				btitle.innerHTML=question["options"][question["right_answer"]];
 				block.appendChild(btitle);
-				let bcontent=document.createElement("div");
-				bcontent.classList.add('content');
-				bcontent.innerHTML=question["explain"]["text"];
-				block.appendChild(bcontent);
+				if (question["explain"]["text"]) {
+					let bcontent=document.createElement("div");
+					bcontent.classList.add('content');
+					bcontent.innerHTML=question["explain"]["text"];
+					block.appendChild(bcontent);
+				}
 				content.appendChild(block);
-				if (question["explain"]["link"]) {
+				if (question["explain"]["link"] && question["explain"]["link"]!='') {
 					let p=document.createElement('p');
 					p.style.textAlign="center";
 					p.innerHTML='<a target="_blank" href="'+question["explain"]["link"]+'">'+question["explain"]["link"]+'<a>';
 					content.appendChild(p);
 				}
+				if (question["explain"]["media"] && question["explain"]["media"]!='') {
+					let fig=document.createElement('figure');
+					fig.classList.add('centered');
+					fig.innerHTML=question["explain"]["media"];
+					content.appendChild(fig);
+				}
 				slide.appendChild(content);
 				document.body.insertBefore(slide,podslide);
 			}
-			// Statistiques
+			// Statistics
 			slide=document.createElement('section');
-			slide.dataset['question']=question['id'];
+			slide.dataset['question']=question['cd_question'];
 			slide.dataset['numfragment']='1';
 			slide.dataset['onshow']='display_stats';
 			title=document.createElement('h1');

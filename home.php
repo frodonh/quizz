@@ -16,7 +16,7 @@
 	<?php
 		require 'login.php';
 		$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
-		$res=pg_query_params("select * from seminaire.agents where id=$1",array($_COOKIE['semid'])) or die('Request failed: '.pg_last_error());
+		$res=pg_query_params("select * from seminaire.agents where cd_agent=$1",array($_COOKIE['semid'])) or die('Request failed: '.pg_last_error());
 		$val=pg_fetch_array($res,null,PGSQL_ASSOC);
 		pg_free_result($res);
 		echo "<div class=\"fiche equipe{$val['equipe']} expanded\"><div class=\"button\" onclick=\"this.parentNode.classList.toggle('expanded')\"><a href=\"#\"></a></div><h1>{$val['prenom']} {$val['nom']}</h1>";
@@ -32,6 +32,6 @@
 	<a href="paires.php"><button type="button">Découvrir ma paire</button></a>
 	<a href="equipe.php"><button type="button">Voir mon équipe</button></a>
 	<a href="qpc.htm"><button type="button">Participer au quizz</button></a>
-	<a href="login.htm"><button type="button" onclick="document.cookie='semid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'; return true">Déconnexion</button></a>
+	<a href="login.htm"><button type="button" onclick="document.cookie='semid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'; document.cookie='game=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'; return true">Déconnexion</button></a>
 </body>
 </html>

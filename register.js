@@ -1,3 +1,5 @@
+var game;
+
 const unites={
 	"ECUMM":["","Marha"],
 	"SOAD":["","uDAM","Synobs","OSIR"],
@@ -16,6 +18,7 @@ function submit(event) {
 			let d=new Date();
 			d.setTime(d.getTime()+2*24*3600*1000);
 			document.cookie="semid="+id+"; expires="+d.toUTCString()+"; path=/; SameSite=Lax";
+			document.cookie="game="+game+"; expires="+d.toUTCString()+"; path=/; SameSite=Lax";
 			window.location.href="home.php";
 		} else if (res.startsWith("KO")) {
 			event.target.parentNode.getElementsByTagName('p')[0].style.display="block";
@@ -25,6 +28,15 @@ function submit(event) {
 }
 
 document.addEventListener("DOMContentLoaded",function() {
+	// Read query string
+	let querys=decodeURI(location.search.substr(1)).split('&');
+	let parameters=[];
+	for (let i=0;i<querys.length;++i) {
+		let varval=querys[i].split('=');
+		parameters[varval[0]]=varval[1];
+	}
+	game='1';
+	if ('game' in parameters && parameters['game']!='') game=parameters['game'];
 	// Submit form
 	document.getElementById("ok").addEventListener("click",submit);
 });

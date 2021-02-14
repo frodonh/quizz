@@ -15,7 +15,7 @@
 	<?php
 		require 'login.php';
 		$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
-		$res=pg_query_params("select paire from seminaire.agents where id=$1",array($_COOKIE['semid'])) or die('Request failed: '.pg_last_error());
+		$res=pg_query_params("select paire from seminaire.agents where cd_agent=$1",array($_COOKIE['semid'])) or die('Request failed: '.pg_last_error());
 		$val=pg_fetch_row($res);
 		pg_free_result($res);
 		$pair=$val[0];
@@ -26,7 +26,7 @@
 			echo "<h1>".$title."</h1>";
 			$id=strtok($pair,',');
 			while ($id!=false) {
-				$res=pg_query_params("select * from seminaire.agents where id=$1",array($id)) or die('Request failed: '.pg_last_error());
+				$res=pg_query_params("select * from seminaire.agents where cd_agent=$1",array($id)) or die('Request failed: '.pg_last_error());
 				$val=pg_fetch_array($res,null,PGSQL_ASSOC);
 				pg_free_result($res);
 				echo "<div class=\"fiche equipe{$val['equipe']} expanded\"><div class=\"button\" onclick=\"this.parentNode.classList.toggle('expanded')\"><a href=\"#\"></a></div><h1>{$val['prenom']} {$val['nom']}</h1>";

@@ -17,10 +17,10 @@
 		const ncolors=["Bleus","Verts","Fuchsia","Orange","Gris"];
 		require 'login.php';
 		$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
-		$res=pg_query_params("select * from seminaire.agents where id=$1",array($_COOKIE['semid'])) or die('Request failed: '.pg_last_error());
+		$res=pg_query_params("select * from seminaire.agents where cd_agent=$1",array($_COOKIE['semid'])) or die('Request failed: '.pg_last_error());
 		$val=pg_fetch_array($res,null,PGSQL_ASSOC);
 		pg_free_result($res);
-		$res=pg_query_params("select nom,prenom,direction,service,unite,fonction,site from seminaire.agents where equipe=(select equipe from seminaire.agents where id=$1) and present=true order by nom",array($_COOKIE['semid'])) or die('Request failed: '.pg_last_error());
+		$res=pg_query_params("select nom,prenom,direction,service,unite,fonction,site from seminaire.agents where equipe=(select equipe from seminaire.agents where cd_agent=$1) and present=true order by nom",array($_COOKIE['semid'])) or die('Request failed: '.pg_last_error());
 		$arr=pg_fetch_all($res);
 		pg_close($dbconn);
 		echo '<h1 class="fg-equipe'.$val['equipe'].'">Les '.ncolors[$val['equipe']]."</h1>";

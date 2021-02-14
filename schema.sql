@@ -16,12 +16,17 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-ALTER TABLE IF EXISTS ONLY seminaire.state DROP CONSTRAINT IF EXISTS state_pkey;
+ALTER TABLE IF EXISTS ONLY seminaire.state DROP CONSTRAINT IF EXISTS state_game_fkey;
+ALTER TABLE IF EXISTS ONLY seminaire.answers DROP CONSTRAINT IF EXISTS answers_question_fkey;
+ALTER TABLE IF EXISTS ONLY seminaire.answers DROP CONSTRAINT IF EXISTS answers_game_fkey;
+ALTER TABLE IF EXISTS ONLY seminaire.answers DROP CONSTRAINT IF EXISTS answers_agent_fkey;
+ALTER TABLE IF EXISTS ONLY seminaire.questions DROP CONSTRAINT IF EXISTS questions_pkey;
+ALTER TABLE IF EXISTS ONLY seminaire.games DROP CONSTRAINT IF EXISTS games_pkey;
 ALTER TABLE IF EXISTS ONLY seminaire.answers DROP CONSTRAINT IF EXISTS answers_pkey;
 ALTER TABLE IF EXISTS ONLY seminaire.agents DROP CONSTRAINT IF EXISTS agents_pkey;
-ALTER TABLE IF EXISTS seminaire.questions ALTER COLUMN id DROP DEFAULT;
-ALTER TABLE IF EXISTS seminaire.games ALTER COLUMN id DROP DEFAULT;
-ALTER TABLE IF EXISTS seminaire.agents ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS seminaire.questions ALTER COLUMN cd_question DROP DEFAULT;
+ALTER TABLE IF EXISTS seminaire.games ALTER COLUMN cd_game DROP DEFAULT;
+ALTER TABLE IF EXISTS seminaire.agents ALTER COLUMN cd_agent DROP DEFAULT;
 DROP TABLE IF EXISTS seminaire.state;
 DROP SEQUENCE IF EXISTS seminaire.questions_id_seq;
 DROP TABLE IF EXISTS seminaire.questions;
@@ -76,15 +81,15 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE seminaire.agents (
-    id integer NOT NULL,
+    cd_agent integer NOT NULL,
     nom character varying(30),
     prenom character varying(30),
     origine character varying(5),
-    direction character varying(10),
-    service character varying(10),
-    unite character varying(50),
-    fonction character varying(150),
-    site character varying(30),
+    direction text,
+    service text,
+    unite text,
+    fonction text,
+    site text,
     present boolean,
     paire character varying(30),
     equipe integer DEFAULT trunc((random() * (4)::double precision))
@@ -107,7 +112,7 @@ CREATE SEQUENCE seminaire.agents_id_seq
 -- Name: agents_id_seq; Type: SEQUENCE OWNED BY; Schema: seminaire; Owner: -
 --
 
-ALTER SEQUENCE seminaire.agents_id_seq OWNED BY seminaire.agents.id;
+ALTER SEQUENCE seminaire.agents_id_seq OWNED BY seminaire.agents.cd_agent;
 
 
 --
@@ -115,10 +120,10 @@ ALTER SEQUENCE seminaire.agents_id_seq OWNED BY seminaire.agents.id;
 --
 
 CREATE TABLE seminaire.answers (
-    agent integer NOT NULL,
-    question integer NOT NULL,
+    cd_agent integer NOT NULL,
+    cd_question integer NOT NULL,
     answer integer,
-    game integer NOT NULL
+    cd_game integer NOT NULL
 );
 
 
@@ -127,7 +132,7 @@ CREATE TABLE seminaire.answers (
 --
 
 CREATE TABLE seminaire.games (
-    id integer NOT NULL,
+    cd_game integer NOT NULL,
     questions integer[],
     name text
 );
@@ -138,7 +143,6 @@ CREATE TABLE seminaire.games (
 --
 
 CREATE SEQUENCE seminaire.games_id_seq
-    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -150,7 +154,7 @@ CREATE SEQUENCE seminaire.games_id_seq
 -- Name: games_id_seq; Type: SEQUENCE OWNED BY; Schema: seminaire; Owner: -
 --
 
-ALTER SEQUENCE seminaire.games_id_seq OWNED BY seminaire.games.id;
+ALTER SEQUENCE seminaire.games_id_seq OWNED BY seminaire.games.cd_game;
 
 
 --
@@ -158,13 +162,14 @@ ALTER SEQUENCE seminaire.games_id_seq OWNED BY seminaire.games.id;
 --
 
 CREATE TABLE seminaire.questions (
-    id integer NOT NULL,
+    cd_question integer NOT NULL,
     question text,
     answers text[],
-    answer integer,
+    right_answer integer,
     explain_text text,
     explain_link text,
-    media text
+    media text,
+    explain_media text
 );
 
 
@@ -173,7 +178,6 @@ CREATE TABLE seminaire.questions (
 --
 
 CREATE SEQUENCE seminaire.questions_id_seq
-    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -185,7 +189,7 @@ CREATE SEQUENCE seminaire.questions_id_seq
 -- Name: questions_id_seq; Type: SEQUENCE OWNED BY; Schema: seminaire; Owner: -
 --
 
-ALTER SEQUENCE seminaire.questions_id_seq OWNED BY seminaire.questions.id;
+ALTER SEQUENCE seminaire.questions_id_seq OWNED BY seminaire.questions.cd_question;
 
 
 --
@@ -193,30 +197,30 @@ ALTER SEQUENCE seminaire.questions_id_seq OWNED BY seminaire.questions.id;
 --
 
 CREATE TABLE seminaire.state (
-    id integer NOT NULL,
+    cd_game integer NOT NULL,
     val character varying(5)
 );
 
 
 --
--- Name: agents id; Type: DEFAULT; Schema: seminaire; Owner: -
+-- Name: agents cd_agent; Type: DEFAULT; Schema: seminaire; Owner: -
 --
 
-ALTER TABLE ONLY seminaire.agents ALTER COLUMN id SET DEFAULT nextval('seminaire.agents_id_seq'::regclass);
-
-
---
--- Name: games id; Type: DEFAULT; Schema: seminaire; Owner: -
---
-
-ALTER TABLE ONLY seminaire.games ALTER COLUMN id SET DEFAULT nextval('seminaire.games_id_seq'::regclass);
+ALTER TABLE ONLY seminaire.agents ALTER COLUMN cd_agent SET DEFAULT nextval('seminaire.agents_id_seq'::regclass);
 
 
 --
--- Name: questions id; Type: DEFAULT; Schema: seminaire; Owner: -
+-- Name: games cd_game; Type: DEFAULT; Schema: seminaire; Owner: -
 --
 
-ALTER TABLE ONLY seminaire.questions ALTER COLUMN id SET DEFAULT nextval('seminaire.questions_id_seq'::regclass);
+ALTER TABLE ONLY seminaire.games ALTER COLUMN cd_game SET DEFAULT nextval('seminaire.games_id_seq'::regclass);
+
+
+--
+-- Name: questions cd_question; Type: DEFAULT; Schema: seminaire; Owner: -
+--
+
+ALTER TABLE ONLY seminaire.questions ALTER COLUMN cd_question SET DEFAULT nextval('seminaire.questions_id_seq'::regclass);
 
 
 --
@@ -224,7 +228,7 @@ ALTER TABLE ONLY seminaire.questions ALTER COLUMN id SET DEFAULT nextval('semina
 --
 
 ALTER TABLE ONLY seminaire.agents
-    ADD CONSTRAINT agents_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT agents_pkey PRIMARY KEY (cd_agent);
 
 
 --
@@ -232,15 +236,55 @@ ALTER TABLE ONLY seminaire.agents
 --
 
 ALTER TABLE ONLY seminaire.answers
-    ADD CONSTRAINT answers_pkey PRIMARY KEY (game, agent, question);
+    ADD CONSTRAINT answers_pkey PRIMARY KEY (cd_game, cd_agent, cd_question);
 
 
 --
--- Name: state state_pkey; Type: CONSTRAINT; Schema: seminaire; Owner: -
+-- Name: games games_pkey; Type: CONSTRAINT; Schema: seminaire; Owner: -
+--
+
+ALTER TABLE ONLY seminaire.games
+    ADD CONSTRAINT games_pkey PRIMARY KEY (cd_game);
+
+
+--
+-- Name: questions questions_pkey; Type: CONSTRAINT; Schema: seminaire; Owner: -
+--
+
+ALTER TABLE ONLY seminaire.questions
+    ADD CONSTRAINT questions_pkey PRIMARY KEY (cd_question);
+
+
+--
+-- Name: answers answers_agent_fkey; Type: FK CONSTRAINT; Schema: seminaire; Owner: -
+--
+
+ALTER TABLE ONLY seminaire.answers
+    ADD CONSTRAINT answers_agent_fkey FOREIGN KEY (cd_agent) REFERENCES seminaire.agents(cd_agent);
+
+
+--
+-- Name: answers answers_game_fkey; Type: FK CONSTRAINT; Schema: seminaire; Owner: -
+--
+
+ALTER TABLE ONLY seminaire.answers
+    ADD CONSTRAINT answers_game_fkey FOREIGN KEY (cd_game) REFERENCES seminaire.games(cd_game);
+
+
+--
+-- Name: answers answers_question_fkey; Type: FK CONSTRAINT; Schema: seminaire; Owner: -
+--
+
+ALTER TABLE ONLY seminaire.answers
+    ADD CONSTRAINT answers_question_fkey FOREIGN KEY (cd_question) REFERENCES seminaire.questions(cd_question);
+
+
+--
+-- Name: state state_game_fkey; Type: FK CONSTRAINT; Schema: seminaire; Owner: -
 --
 
 ALTER TABLE ONLY seminaire.state
-    ADD CONSTRAINT state_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT state_game_fkey FOREIGN KEY (cd_game) REFERENCES seminaire.games(cd_game);
 
 
 --

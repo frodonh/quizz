@@ -1,0 +1,6 @@
+$palettea: #6c7ae0;
+$paletteb: #ff9f39;
+$paletteda: scale-color($palettea,$lightness: -20%);
+$palettela: scale-color($palettea,$lightness: 50%);
+$palettedb: scale-color($paletteb,$lightness: -20%);
+$palettelb: scale-color($paletteb,$lightness: 50%);

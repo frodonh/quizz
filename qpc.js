@@ -65,7 +65,7 @@ function display(id) {
 	if (currentstatus==id) return;
 	const questiondiv=document.getElementById('question');
 	const optionsdiv=document.getElementById('options');
-	const question=questions.find(x=>x['id']==id);
+	const question=questions.find(x=>x['cd_question']==id);
 	questiondiv.innerHTML=question['question'];
 	questiondiv.dataset['question']=''+id;
 	optionsdiv.innerHTML='';
@@ -125,6 +125,7 @@ function handleTouchEnd(evt) {
  *       Main event loop          *
  **********************************/
 document.addEventListener("DOMContentLoaded",function(event) {
+	const cookies=document.cookie;
 	// Read query string
 	let querys=decodeURI(location.search.substr(1)).split('&');
 	let parameters=[];
@@ -133,7 +134,13 @@ document.addEventListener("DOMContentLoaded",function(event) {
 		parameters[varval[0]]=varval[1];
 	}
 	game='1';
-	if ('game' in parameters && parameters['game']!='') game=parameters['game'];
+	if ('game' in parameters && parameters['game']!='') game=parameters['game']; else {
+		const pos=cookies.indexOf('game=')+5;
+		if (pos>4) {
+			const endpos=cookies.indexOf(';',pos);
+			if (endpos==-1) game=cookies.substring(pos);
+		}
+	}
 	// Load quizz
 	let xhttp=new XMLHttpRequest();
 	xhttp.open('POST','quizz.php',true);
@@ -146,9 +153,8 @@ document.addEventListener("DOMContentLoaded",function(event) {
 	}
 	xhttp.send('quizz='+game);
 	// Get agent id from cookie
-	const cookies=document.cookie;
 	const pos=cookies.indexOf('semid=')+6;
-	if (pos==5) window.location.href="login.htm";
+	if (pos==5) window.location.href="login.htm?game="+game;
 	const endpos=cookies.indexOf(';',pos);
 	if (endpos==-1) agentid=cookies.substring(pos);
 	else agentid=cookies.substring(pos,endpos); 
