@@ -1,12 +1,19 @@
 let popupopened=false;
 let questions={};
 let questions_index=[];
+let selected_question=null;
+let save_onkeydown;
 
 /*******************************************
  *            GUI components               *
  *******************************************/
-function open_popup(id,onkeydown=null) {
+function open_popup(id,title,callback) {
 	if (popupopened) return;
+	save_onkeydown=window.onkeydown;
+	window.onkeydown=function(event) {
+		if (event.key=='Enter') close_popup(callback);
+		else if (event.key=='Escape') close_popup(null);
+	};
 	let overlay=document.getElementById('overlay');
 	overlay.style.opacity='0';
 	overlay.style.display='block';
@@ -19,29 +26,26 @@ function open_popup(id,onkeydown=null) {
 		tfield.focus();
 		tfield.select();
 	}
+	if (title) popup.getElementsByTagName('h2')[0].innerHTML=title;
+	popup.getElementsByTagName('input')[0].value='';
 	setTimeout(function() { 
 		popup.style.maxHeight='100%';
 		popup.addEventListener('transitionend',function() {
 			popup.querySelectorAll('button,input,select').forEach((el)=>el.disabled=false);
 			popup.style.overflow='auto';
-			save_onkeydown=window.onkeydown;
-			if (onkeydown) window.onkeydown=onkeydown;
-			else if (id in hotkeys) {
-				window.onkeydown=function(event) {
-					if (event.keyCode in hotkeys[id]) hotkeys[id][event.keyCode]();
-				};
-			} else window.onkeydown=null;
 			popupopened=popup;
 		},{'once':true});
 		overlay.style.opacity='0.5'; }
 	,50);
+	popup.getElementsByClassName('btnok')[0].addEventListener('click',()=>close_popup(callback),{'once':true});
+	popup.getElementsByClassName('btncancel')[0].addEventListener('click',()=>close_popup(null),{'once':true});
 }
 
 function close_popup(callback=null) {
 	if (!popupopened) return;
+	window.onkeydown=save_onkeydown;
 	let popup=popupopened;
 	popup.querySelectorAll('button,input,select').forEach((el)=>el.disabled=true);
-	window.onkeydown=save_onkeydown;
 	let overlay=document.getElementById('overlay');
 	if (callback) {
 		overlay.style.display='none';
@@ -54,17 +58,14 @@ function close_popup(callback=null) {
 	popup.style.overflow='hidden';
 	popup.style.maxHeight='0px';
 	popupopened=null;
-	if (callback) callback();
+	if (callback) callback(popup.getElementsByTagName('input')[0].value);
 }
 
 
 /*******************************************
  *              GUI actions                *
  *******************************************/
-var question_sort= {
-	"column":"",
-	"order":0
-};
+var question_sort= { "column":"", "order":0 };
 
 const question_fields = {
 	"question":{
@@ -93,10 +94,96 @@ function sort_column(event) {
 function newquestion(sender) {
 }
 
+function click_option(sender) {
+	let table=document.getElementById('tanswers').children[0];
+	let deselect=sender.currentTarget.classList.contains('selected');
+	Array.from(table.getElementsByTagName('tr')).forEach((tr)=>tr.classList.remove('selected'));
+	if (!deselect) sender.currentTarget.classList.add('selected');
+}
+
+function update_question_form() {
+	let title=document.getElementById('editquestion').children[0];
+	title.innerHTML=questions[selected_question].question;
+	let table=document.getElementById('tanswers').children[0];
+	table.innerHTML='';
+	let i=0;
+	for (const opt of questions[selected_question].options) {
+		let tr=document.createElement('tr');
+		if (i==questions[selected_question].right_answer) tr.classList.add('rightanswer');
+		tr.addEventListener('click',click_option);
+		let td=document.createElement('td');
+		td.textContent=opt;
+		tr.appendChild(td);
+		table.appendChild(tr);
+		++i;
+	}
+}
+
+function get_selected_answer(tbody) {
+	let sel=tbody.getElementsByClassName('selected');
+	if (sel.length==0) return null; else return sel[0];
+}
+
+function answer_up() {
+	let tbody=document.getElementById('tanswers').children[0];
+	let ans=get_selected_answer(tbody);
+	if (ans!=null) {
+		let prev=ans.previousSibling;
+		if (prev!=null) tbody.insertBefore(ans,prev);
+	}
+}
+
+function answer_down() {
+	let tbody=document.getElementById('tanswers').children[0];
+	let ans=get_selected_answer(tbody);
+	if (ans!=null) {
+		let next=ans.nextSibling;
+		if (next!=null) tbody.insertBefore(next,ans);
+	}
+}
+
+function answer_new() {
+	open_popup('textinput','Nouvelle option',function(value) {
+		let tbody=document.getElementById('tanswers').children[0];
+		if (value=='') return;
+		let tr=document.createElement('tr');
+		tr.addEventListener('click',click_option);
+		let td=document.createElement('td');
+		td.textContent=value;
+		tr.appendChild(td);
+		tbody.appendChild(tr);
+	});
+}
+
+function answer_delete() {
+	let tbody=document.getElementById('tanswers').children[0];
+	let ans=get_selected_answer(tbody);
+	if (ans!=null) ans.parentNode.removeChild(ans);
+}
+
+function answer_check() {
+	let tbody=document.getElementById('tanswers').children[0];
+	let ans=get_selected_answer(tbody);
+	if (ans!=null) {
+		Array.from(tbody.getElementsByTagName('tr')).forEach((tr)=>tr.classList.remove('rightanswer'));
+		ans.classList.add('rightanswer');
+	}
+}
+
 function openquestion(sender) {
 	// Highlight the selected line
-	
+	let deselect=sender.currentTarget.classList.contains('selected');
+	Array.from(document.getElementById('tquestions').getElementsByTagName('tr')).forEach((tr)=>tr.classList.remove('selected'));
 	// Display the question
+	if (deselect) {
+		selected_question=null;
+		document.getElementById('editquestion').classList.remove('shown');
+		return;
+	}
+	sender.currentTarget.classList.add('selected');
+	if (!selected_question) document.getElementById('editquestion').classList.add('shown');
+	selected_question=sender.currentTarget.dataset['id'];
+	update_question_form();
 }
 
 function create_questions_table() {
@@ -125,7 +212,7 @@ function create_questions_table() {
 	let body=document.createElement('tbody');
 	tab.appendChild(body);
 	for (const question of questions_index) {
-	let tr=document.createElement('tr');
+		let tr=document.createElement('tr');
 		tr.addEventListener('click',openquestion);
 		tr.dataset['id']=question;
 		tr.appendChild(document.createElement('td'));

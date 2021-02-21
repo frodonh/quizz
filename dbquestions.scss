@@ -2,14 +2,6 @@
 
 @import "colors";
 
-@keyframes kfblinkupdate {
-	from {background-color: #aaffaa;}
-}
-
-@keyframes kfblinkdelete {
-	to {opacity: 0;}
-}
-
 * {
 	box-sizing: border-box;
 }
@@ -27,87 +19,23 @@ body {
 /*************************
  *       Widgets         *
  *************************/
-textarea,input,select {
-	font-size: inherit;
-	vertical-align: middle;
-	background-color: $palettela;
-	border: 1px solid black;
-	border-radius: 5px;
-	color: black;
-	padding: 0.1em 0.5em;
+button.small {
+	margin: 1.3px;
+	padding: 4px;
+	border: 1px solid $paletteda;
+	border-radius: 2px;
+	background-color: $paletteda;
+	font-weight: bold;
+	color: white;
 
 	&:hover,&:focus {
-		background-color: scale-color($palettea,$lightness: -50%);
-		color: white;
+		background-color: $paletteda;
+		box-shadow: 0 2px 10px 0px rgba(0,0,0,0.3);
 	}
 
-	&[disabled] {
-		background-color: lightgrey;
-		color: black;
-	}
-
-	&.error {
-		border: 2px solid red !important;
-	}
-}
-
-label {
-	display: inline-block;
-	vertical-align: middle;
-	text-align: right;
-	padding-right: 1em;
-}
-
-input,select:not([multiple]) {
-	height: 2.5em;
-}
-
-select {
-	border-width: 1px;
-	&[multiple] {
-		max-height: 10em;
-		option:hover {
-			background-color: scale-color($palettea,$lightness: -50%);
-			color: white;
-		}
-		&:hover,&:focus {
-			background-color: $palettela;
-			color: black;
-		}
-	}
-}
-
-select[multiple] option:checked {
-	background: $palettedb linear-gradient(0deg,$palettedb 0%,$palettedb 100%);
-	&:hover {
-		background: $paletteda linear-gradient(0deg,$paletteda 0%,$paletteda 100%);
-	}
-}
-
-textarea {
-	resize: vertical;
-	font-family: 'Lato',sans-serif;
-}
-
-form {
-	ul {
-		list-style-type: none;
-		padding-left: 0;
-
-		li { 
-			margin-bottom: 0.5em; 
-			label {
-				width: 8em;
-				&.large {width: calc(100% - 3em); }
-			}
-			textarea,input[type=text],input[type=password],input[type=number],input[type=date],select { width: calc(100% - 8em - 2px); }
-			input[type=checkbox] {width: 1.5em; margin:0}
-
-			&.twocolumns {
-				textarea,input[type=text],input[type=number],input[type=date],select { width: calc(50% - 8em - 2px); }
-				label.large {width: calc(50% - 3em); }
-			}
-		}
+	img {
+		width: 16px;
+		height: 16px;
 	}
 }
 
@@ -133,23 +61,95 @@ div.buttons {
 	}
 }
 
-button.small {
-	margin: 1.3px;
-	padding: 4px;
-	border: 1px solid $paletteda;
-	border-radius: 2px;
-	background-color: $palettea;
-	font-weight: bold;
-	color: white;
+table {
+	border-collapse: collapse;
 
-	&:hover,&:focus {
-		background-color: $paletteda;
-		box-shadow: 0 2px 10px 0px rgba(0,0,0,0.3);
+	thead > tr {
+		th {
+			background-color: $paletteda;
+			color: white;
+			font-weight: bold;
+			font-size: 120%;
+			text-align: left;
+			top: 4.7rem;
+
+			a {
+				text-decoration: none;
+				color: inherit;
+				cursor: pointer;
+
+				&.sorted-reverse::after{ content: '▼'; }
+				&.sorted::after{ content: '▲'; }
+			}
+
+			&:first-child { border-top-left-radius: 10px; }
+			&:last-child { border-top-right-radius: 10px; }
+		}
 	}
 
-	img {
-		width: 16px;
-		height: 16px;
+	th,td {
+		padding: 0.8em 0.5em 0.8em 0.5em;
+
+		&.tools {
+			width: calc(34px + 1em);
+		}
+	}
+
+	tbody {
+		tr:nth-child(even) td { background-color: $palettela; }
+		tr:nth-child(odd) td { background-color: $palettella; }
+		tr:hover td { background-color: $palettelb; }
+		tr.selected td { background-color: $paletteb; }
+		tr:last-child td:first-child { border-bottom-left-radius: 10px; }
+		tr:last-child td:last-child { border-bottom-right-radius: 10px; }
+		&:not(first-child) tr:first-child td:first-child { border-top-left-radius: 10px; }
+		&:not(first-child) tr:first-child td:last-child { border-top-right-radius: 10px; }
+	}
+}
+
+textarea,input,select {
+	font-size: inherit;
+	vertical-align: middle;
+	background-color: $palettela;
+	border: 1px solid black;
+	border-radius: 5px;
+	color: black;
+	padding: 0.1em 0.5em;
+
+	&:hover,&:focus {
+		background-color: scale-color($palettea,$lightness: -50%);
+		color: white;
+	}
+
+	&[disabled] {
+		background-color: lightgrey;
+		color: black;
+	}
+
+	&.error {
+		border: 2px solid red !important;
+	}
+}
+
+form {
+	ul {
+		list-style-type: none;
+		padding-left: 0;
+
+		li { 
+			margin-bottom: 0.5em; 
+			label {
+				width: 8em;
+				&.large {width: calc(100% - 3em); }
+			}
+			textarea,input[type=text],input[type=password],input[type=number],input[type=date],select { width: calc(100% - 8em - 2px); }
+			input[type=checkbox] {width: 1.5em; margin:0}
+
+			&.twocolumns {
+				textarea,input[type=text],input[type=number],input[type=date],select { width: calc(50% - 8em - 2px); }
+				label.large {width: calc(50% - 3em); }
+			}
+		}
 	}
 }
 
@@ -165,164 +165,44 @@ header {
 	}
 }
 
-#maintable {
-	overflow-y: auto;
-	flex: auto;
-}
-
-section {
-
-
-	&> .content {
-		margin-top: 50px;
-	}
-
-	h2 {
-		font-size: 100%;
-		font-weight: bold;
-	}
-
-	div.selectfields table {
-		border: 1px solid $palettea;
-		box-shadow: 0 0px 40px 0px rgba(0,0,0,0.15);
-	}
-
-	div.twocolumns {
-		display: flex;
-		flex-flow: row nowrap;
-		justify-content: space-between;
-
-		div {
-			flex: auto;
-			&:not(:first-child) {margin-left:1em;}
-		}
-	}
-
-}
-
 h1 {
 	text-align: center;
 }
 
-nav {
-	height: 2.8rem;
-	background: #ccc;
-	border-bottom: 4px solid $palettea;
-	margin: 0 0 1em 0;
-
-	button {display: none;}
-
-	ul {
-		margin: 0;
-		list-style: none;
-		display: flex;
-		flex-flow: row wrap;
-		padding: 0;
-
-		li {
-			position: relative;
-			cursor: pointer;
-			padding: 1em 1em;
-			flex: auto;
-			text-align: center;
-
-			a {
-				text-decoration: none;
-				color: inherit;
-			}
-
-			&:hover,&:focus,&.selected {
-				background-color: $palettea;
-				color: white;
-				ul {display:block;}
-			}
-
-			ul {
-				display:none;
-				position: absolute;
-				top: 100%;
-				left: 0;
-				background-color: $palettea;
-				width: 100%;
-				list-style: none;
-				text-align: left;
-
-				li {
-					padding: 0.8em 0.3em;
-
-					button {
-						position: absolute;
-						top: 0.2em;
-						right: 0.1em;
-					}
-				}
-
-				li:hover,li:focus {
-					background-color: $paletteb;
-				}
-			}
-		}
-	}
+#maintable {
+	width: 100%;
+	overflow-y: auto;
+	flex: auto;
+	table {width: 100%;}
 }
 
 
-table {
-	width: 100%;
-	border-collapse: collapse;
+#editquestion {
+	flex: auto;
+	height: 0vh;
+	border-top: solid $palettea;
+	overflow: hidden;
+	transition: height 0.5s ease-in;
+	&.shown { height: 100vh; }
 
-	thead > tr {
-		th {
-			background-color: $palettea;
-			color: white;
-			font-weight: bold;
-			font-size: 120%;
-			text-align: left;
-			top: 4.7rem;
+	& > div {
+		display: flex;
+		padding-bottom: 10px;
+		flex-flow: row nowrap;
+		table { 
+			display: block;
+			tbody,tr,td {display:block; width: 100%;}
+			flex: auto; 
+			tr.rightanswer {border:3px solid $paletteda;}
+		}
 
-			a {
-				text-decoration: none;
-				color: inherit;
-				cursor: pointer;
-
-				&.sorted-reverse::after{ content: '▼'; }
-				&.sorted::after{ content: '▲'; }
-			}
+		& > div:last-child {
+			flex: none;
+			display: flex;
+			flex-flow: column nowrap;
+			justify-content: space-evenly;
 		}
 	}
-
-	th,td {
-		padding: 0.8em 0.5em 0.8em 0.5em;
-
-		&.tools {
-			width: calc(34px + 1em);
-		}
-	}
-
-	tbody {
-		border-bottom-left-radius: 10px;
-		border-bottom-right-radius: 10px;
-
-		tr:nth-child(even) {
-			background-color: $palettela;
-		}
-
-		tr:nth-child(odd) {
-			background-color: white;
-		}
-
-		tr:hover {
-			background-color: $palettelb;
-		}
-
-		tr.blink-update {
-			animation: 1s ease-in 1s 1 normal both running kfblinkupdate;
-		}
-
-		tr.blink-delete {
-			animation: 1s ease-in 0.2s 1 normal both running kfblinkdelete;
-		}
-	}
-
 }
 
 #overlay {
@@ -356,23 +236,19 @@ table {
 	transition: max-height 0.5s ease-in-out;
 	overflow: hidden;
 
-	form {
-		p {text-align: center; }
+	p {text-align: center; }
 
-		ul li {
-			textarea,input[type=text],input[type=number],input[type=date],select {
-				background-color: $paletteda;
-				border-color: white;
-				color: white;
-				&:hover,&:focus {
-					background-color: scale-color($paletteda,$lightness: -50%);
-				}
-			}
+	textarea,input[type=text],input[type=number],input[type=date],select {
+		background-color: $paletteda;
+		border-color: white;
+		color: white;
+		&:hover,&:focus {
+			background-color: scale-color($paletteda,$lightness: -50%);
 		}
+	}
 
-		div.buttons button {
-			background-color: $paletteb;
-		}
+	div.buttons button {
+		background-color: $paletteb;
 	}
 
 	p.message {
@@ -410,48 +286,7 @@ table {
 		background-color: $paletteb;
 	}
 
-	div.selectfields div.sftable {
-		height: 25em;
-	}
 }	
-
-div.selectfields {
-	display: flex;
-	flex-flow: row nowrap;
-	margin: 1em 0;
-
-	div.sftable {
-		flex: auto;
-	}
-
-	table {
-		max-height: 20em;
-		color: black;
-
-		tr:first-child td {
-			border-top-left-radius: 5px;
-			border-top-right-radius: 5px;
-		}
-
-		tr:last-child td {
-			border-bottom-left-radius: 5px;
-			border-bottom-right-radius: 5px;
-		}
-
-		td.selected {
-			background-color: $palettedb;
-			color: white;
-		}
-	}
-	
-	div.sfbuttons {
-		display: flex;
-		flex-flow: column nowrap;
-		justify-content: center;
-		flex: initial;
-		margin: 0 1em;
-	}
-}
 
 /*************************
  *       Printer         *
@@ -461,7 +296,6 @@ div.selectfields {
 		size: landscape;
 	}
 
-	nav,#statusline,section.popup,div.quickfilter {display: none;}
 	table {
 		th.tools,td.tools {display: none;}
 		thead > tr th {
@@ -484,33 +318,15 @@ div.selectfields {
 			}
 		}
 	}
-	table.pivot {
-		th {
-			background-color: white;
-			color: black;
-		}
-
-		tbody {
-			tr:nth-child(even) { background-color: white; }
-		}
-	}
 }
 
 /*************************
  *     Phone portrait    *
  *************************/
 @media screen and (max-width: 400px) {
-	#statusline div#userstatus {display:none;}
 	table {
 		th.optional,td.optional {display: none;}
 		thead tr th {top:3.4rem;}
-	}
-	div.quickfilter {
-		z-index: 12;
-		left: 0.4em;
-		bottom: 0.8em;
-		top: unset;
-		right: unset;
 	}
 	header {
 		position: absolute;
@@ -518,40 +334,6 @@ div.selectfields {
 		height: 5em;
 		z-index: 10;
 		h1 {font-size: 1em;}
-	}
-	nav {
-		height: auto;
-		position: absolute;
-		width: 100%;
-		z-index:11;
-		ul {
-			display: flex;
-			flex-flow: column nowrap;
-			li,button {
-				text-align: right;
-				padding: 0.4em;
-			}
-			button {
-				display: block;
-				border-style: none;
-				&::before { content: '☰' }
-			}
-			li { display: none; }
-		}
-	}
-	nav.open ul li { display: block;}
-	section {
-		div.twocolumns {
-			flex-wrap: wrap;
-			div:not(:first-child) {margin-left: 0;}
-		}
-	}
-	form ul li.twocolumns {
-		textarea,input[type=text],input[type=number],input[type=date],select {
-			width: calc(100% - 8em - 2px); 
-			&:not(:last-child) {margin-bottom: 0.5em;}
-		}
-		label.large {width: calc(100% - 3em); }
 	}
 }
 

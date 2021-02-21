@@ -15,15 +15,32 @@
 		<table id="tquestions">
 		</table>
 	</div>
-	<section id="ppnotice" class="popup">
-		<p class="message"></p>
+	<div id="editquestion">
+		<h2></h2>
+		<p>Options :</p>
+		<div>
+			<table id="tanswers"><tbody></tbody></table>
+			<div>
+				<button class="small" type="button" title="Monter" onclick="answer_up()"><img src="uparrow.svg" /></button>
+				<button class="small" type="button" title="Descendre" onclick="answer_down()"><img src="downarrow.svg" /></button>
+				<button class="small" type="button" title="Ajouter" onclick="answer_new()"><img src="add.svg" /></button>
+				<button class="small" type="button" title="Supprimer" onclick="answer_delete()"><img src="remove.svg" /></button>
+				<button class="small" type="button" title="Bonne réponse" onclick="answer_check()"><img src="check.svg" /></button>
+			</div>
+		</div>
+	</div>
+	<div id="textinput" class="popup">
+		<h2></h2>
 		<form>
+			<ul>
+				<li><input type="text" /></li>
+			</ul>
 			<div class="buttons">
-				<button class="btnok" type="button" tabindex="0">Oui</button>
-				<button class="btncancel" type="button" tabindex="0" onclick="close_popup()">Non</button>
+				<button class="btnok" type="button">OK</button>
+				<button class="btncancel" type="button">Annuler</button>
 			</div>
 		</form>
-	</section>
+	</div>
 </body>
 <script src="dbquestions.js"></script>
 </html>
