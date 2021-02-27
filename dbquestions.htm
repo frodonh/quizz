@@ -3,32 +3,87 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Banque de questions</title>
+	<title>Créateur de quizz</title>
 	<link rel="stylesheet" href="dbquestions.css">
 </head>
 <body>
 	<div id="overlay"></div>
-	<header>
-		<h1>Banque de questions</h1>
-	</header>
-	<div id="maintable">
-		<table id="tquestions">
-		</table>
-	</div>
-	<div id="editquestion">
-		<h2></h2>
-		<p>Options :</p>
-		<div>
-			<table id="tanswers"><tbody></tbody></table>
-			<div>
-				<button class="small" type="button" title="Monter" onclick="answer_up()"><img src="uparrow.svg" /></button>
-				<button class="small" type="button" title="Descendre" onclick="answer_down()"><img src="downarrow.svg" /></button>
-				<button class="small" type="button" title="Ajouter" onclick="answer_new()"><img src="add.svg" /></button>
-				<button class="small" type="button" title="Supprimer" onclick="answer_delete()"><img src="remove.svg" /></button>
-				<button class="small" type="button" title="Bonne réponse" onclick="answer_check()"><img src="check.svg" /></button>
+	<section id="game-editor">
+		<header>
+			<h1>Créer un quizz</h1>
+		</header>
+		<form>
+			<ul>
+				<li><label for="quizzurl">URL du quizz pour le présentateur</label><input type="text" id="quizzurl" readonly></input></li>
+				<li><label for="playerurl">URL à transmettre aux participants</label><input type="text" id="playerurl" readonly></input></li>
+				<li><label for="adminurl">URL d'édition du quizz (pour l'administrateur)</label><input type="text" id="adminurl" readonly></input></li>
+				<li><label for="quizzname">Nom du quizz</label><input type="text" id="quizzname"></input></li>
+			</ul>
+		</form>
+		<div class="seltables">
+			<div class="seltable">
+				<p>Questions disponibles</p>
+				<div>
+					<table id="avquestions">
+						<tbody></tbody>
+					</table>
+				</div>
+			</div>
+			<div class="toolbox">
+				<button type="button" class="small" title="Ajouter à la sélection" onclick="selection_to()"><img src="rightarrow.svg" /></button>
+				<button type="button" class="small" title="Retirer de la sélection" onclick="selection_from()"><img src="leftarrow.svg" /></button>
+				<button type="button" class="small" title="Monter" onclick="selection_up()"><img src="uparrow.svg" /></button>
+				<button type="button" class="small" title="Descendre" onclick="selection_down()"><img src="downarrow.svg" /></button>
+				<button type="button" class="small" title="Éditer les questions" onclick="to_section('game-editor','question-editor',true)"><img src="edit.svg" /></button>
+			</div>
+			<div class="seltable">
+				<p>Questions sélectionnées</p>
+				<div>
+					<table id="selquestions">
+						<tbody></tbody>
+					</table>
+				</div>
 			</div>
 		</div>
-	</div>
+	</section>
+	<section id="question-editor">
+		<button type="button" class="small back" onclick="to_section('question-editor','game-editor',false)">x</button>
+		<header>
+			<h1>Éditer les questions</h1>
+		</header>
+		<div id="maintable">
+			<table id="tquestions">
+			</table>
+		</div>
+		<div id="editquestion">
+			<h2></h2>
+			<p>Options</p>
+			<div>
+				<table id="tanswers"><tbody></tbody></table>
+				<div>
+					<button class="small" type="button" title="Monter" onclick="answer_up()"><img src="uparrow.svg" /></button>
+					<button class="small" type="button" title="Descendre" onclick="answer_down()"><img src="downarrow.svg" /></button>
+					<button class="small" type="button" title="Ajouter" onclick="answer_new()"><img src="add.svg" /></button>
+					<button class="small" type="button" title="Supprimer" onclick="answer_delete()"><img src="remove.svg" /></button>
+					<button class="small" type="button" title="Bonne réponse" onclick="answer_check()"><img src="check.svg" /></button>
+				</div>
+			</div>
+			<div class="twocolumns">
+				<div>
+					<p>Explication</p>
+					<textarea id="explaintext" rows=3 placeholder="Texte d'explication"></textarea>
+				</div>
+				<div>
+					<p>Lien</p>
+					<textarea id="explainlink" rows=3 placeholder="https://www.qwant.com"></textarea>
+				</div>
+			</div>
+			<div class="buttons">
+				<button type="button" onclick="save_options()">Enregistrer</button>
+				<button type="button" onclick="close_options()">Annuler</button>
+			</div>
+		</div>
+	</section>
 	<div id="textinput" class="popup">
 		<h2></h2>
 		<form>

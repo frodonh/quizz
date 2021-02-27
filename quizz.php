@@ -1,25 +1,24 @@
 <?php
 require 'login.php';
 
-function get_quizz($full,$num) {
+function get_quizz($full,$num,$admin) {
 	global $host;
 	global $dbname;
 	global $user;
 	global $password;
 	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
 	$res=null;
-	$name=null;
+	$game=null;
 	$num=intval($num);
-	if ($full) {
-		if ($num>0) {
-			$res=pg_query_params("select name from seminaire.games where cd_game=$1",array($num)) or die('Request failed: '.pg_last_error());
-			$name=pg_fetch_row($res);
-			$name=$name[0];
-			pg_free_result($res);
+	if ($admin || $full) {
+		$res=pg_query_params("select name,questions,pkey from seminaire.games where cd_game=$1",array($num)) or die('Request failed: '.pg_last_error());
+		$game=pg_fetch_row($res);
+		pg_free_result($res);
+	}
+	if ($admin) {
+		$res=pg_query_params("select cd_question,question,answers as options,right_answer,explain_text,explain_link,explain_media,media,cd_game from seminaire.questions where cd_game is null or cd_game=$1",array($num)) or die('Request failed: '.pg_last_error());
+	} elseif ($full) {
 			$res=pg_query_params("select cd_question,question,answers as options,right_answer,explain_text,explain_link,explain_media,media from (select questions[nr] as que,nr from (select *,generate_subscripts(questions,1) as nr from seminaire.games where cd_game=$1) t) as qu inner join seminaire.questions on questions.cd_question=que order by nr;",array($num)) or die('Request failed: '.pg_last_error());
-		} else {
-			$res=pg_query("select cd_question,question,answers as options,right_answer,explain_text,explain_link,explain_media,media from seminaire.questions") or die('Request failed: '.pg_last_error());
-		}
 	} else {
 		$res=pg_query_params("select cd_question,question,answers as options from (select questions[nr] as que,nr from (select *,generate_subscripts(questions,1) as nr from seminaire.games where cd_game=$1) t) as qu inner join seminaire.questions on questions.cd_question=que order by nr;",array($num)) or die('Request failed: '.pg_last_error());
 	}
@@ -28,7 +27,7 @@ function get_quizz($full,$num) {
 		$quizz[$key]['options'][0]='[';
 		$quizz[$key]['options'][strlen($quizz[$key]['options'])-1]=']';
 		$quizz[$key]['options']=json_decode($quizz[$key]['options']);
-		if ($full) {
+		if ($full || $admin) {
 			if (($quizz[$key]['explain_text']!=NULL && $quizz[$key]['explain_text']!='') || ($quizz[$key]['explain_media']!=NULL && $quizz[$key]['explain_media']!='')) {
 				$quizz[$key]['explain']=array("text"=>$quizz[$key]['explain_text'],"link"=>$quizz[$key]['explain_link'],"media"=>$quizz[$key]['explain_media']);
 			} else {
@@ -39,26 +38,25 @@ function get_quizz($full,$num) {
 			unset($quizz[$key]['explain_media']);
 		}
 	}
-	header("Content-Type: application/json");
-	if ($full) {
-		if ($num>0) {
-			$quizz=array("name"=>$name,"questions"=>$quizz);
-		} else {
-			$qu=array();
-			foreach ($quizz as $question) {
-				$id=$question['cd_question'];
-				unset($question['cd_question']);
-				$qu[$id]=$question;
-			}
-			$quizz=$qu;
+	if ($admin) {
+		$qu=array();
+		foreach ($quizz as $question) {
+			$id=$question['cd_question'];
+			unset($question['cd_question']);
+			$qu[$id]=$question;
 		}
-	}
+		$quizz=$qu;
+		$game[1][0]='[';
+		$game[1][strlen($game[1])-1]=']';
+		$quizz=array("name"=>$game[0],"setquestions"=>json_decode($game[1]),"pkey"=>$game[2],"questions"=>$quizz);
+	} elseif ($full) $quizz=array("name"=>$game[0],"questions"=>$quizz);
+	header("Content-Type: application/json");
 	echo json_encode($quizz);
 	pg_free_result($res);
 	pg_close($dbconn);
 }
 
-if (array_key_exists('current',$_POST)) {	// Retourne la question courante
+if (array_key_exists('current',$_POST)) {	// Return the current viewed question
 	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
 	$res=pg_query_params("select val from seminaire.state where cd_game=$1",array($_POST['current'])) or die('Request failed: '.pg_last_error());
 	$row=pg_fetch_row($res);
@@ -66,7 +64,7 @@ if (array_key_exists('current',$_POST)) {	// Retourne la question courante
 	pg_free_result($res);
 	pg_close($dbconn);
 }
-elseif (array_key_exists('reset',$_POST)) {	// Vide le tableau des réponses et réinitialise la question courante
+elseif (array_key_exists('reset',$_POST)) {	// Clear the answers table and initialize the current question to null (all participants are waiting for the first question)
 	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
 	$res=pg_query_params("delete from seminaire.answers where cd_game=$1",array($_POST['reset'])) or die('Request failed: '.pg_last_error());
 	pg_free_result($res);
@@ -74,14 +72,14 @@ elseif (array_key_exists('reset',$_POST)) {	// Vide le tableau des réponses et 
 	echo "OK";
 	pg_close($dbconn);
 }
-elseif (array_key_exists('set',$_POST)) {	// Définit la question courante
+elseif (array_key_exists('set',$_POST)) {	// Set the current question
 	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
 	$res=pg_query_params("update seminaire.state set val=$1 where cd_game=$2",array($_POST['set'],$_POST['game'])) or pg_query_params("insert into seminaire.state (cd_game,val) values ($1,$2)",array($_POST['game'],$_POST['set'])) or die('Request failed: '.pg_last_error());
 	echo "OK";
 	pg_free_result($res);
 	pg_close($dbconn);
 }
-elseif (array_key_exists('agent',$_POST)) {	// Enregistre la réponse dans la base
+elseif (array_key_exists('agent',$_POST)) {	// Save an answer in the database
 	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
 	$res=pg_query_params("select val from seminaire.state where cd_game=$1",array($_POST['game'])) or die('Request failed: '.pg_last_error());
 	$quest=pg_fetch_row($res)[0];
@@ -97,7 +95,7 @@ elseif (array_key_exists('agent',$_POST)) {	// Enregistre la réponse dans la ba
 	}
 	pg_close($dbconn);
 }
-elseif (array_key_exists('stats-answer',$_POST)) {	// Statistiques pour une question
+elseif (array_key_exists('stats-answer',$_POST)) {	// Statistics for a question
 	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
 	$res=pg_query_params("select equipe,answer,count(*) as nombre from seminaire.answers inner join seminaire.agents on answers.cd_agent=agents.cd_agent where cd_question=$1 and cd_game=$2 group by equipe,answer order by equipe,answer",array($_POST['stats-answer'],$_POST['game'])) or die('Request failed: '.pg_last_error());
 	$stats=pg_fetch_all($res);
@@ -106,7 +104,7 @@ elseif (array_key_exists('stats-answer',$_POST)) {	// Statistiques pour une ques
 	pg_free_result($res);
 	pg_close($dbconn);
 }
-elseif (array_key_exists('stats-teams',$_POST)) {	// Statistiques des équipes
+elseif (array_key_exists('stats-teams',$_POST)) {	// Statistics for teams
 	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
 	$res=pg_query_params("select equipe,seminaire.score((select count(*) from seminaire.answers inner join seminaire.agents on answers.cd_agent=agents.cd_agent inner join seminaire.questions on questions.cd_question=answers.cd_question where answers.answer=questions.right_answer and agents.equipe=ag.equipe and cd_game=$1)::integer,(select count(*) from seminaire.answers inner join seminaire.agents on answers.cd_agent=agents.cd_agent inner join seminaire.questions on questions.cd_question=answers.cd_question where answers.answer!=questions.right_answer and agents.equipe=ag.equipe and cd_game=$1)::integer) as score from seminaire.agents as ag group by equipe order by equipe;",array($_POST['stats-teams'])) or die('Request failed: '.pg_last_error());
 	$answers=pg_fetch_all($res);
@@ -117,7 +115,7 @@ elseif (array_key_exists('stats-teams',$_POST)) {	// Statistiques des équipes
 	pg_free_result($res);
 	pg_close($dbconn);
 }
-elseif (array_key_exists('stats-units',$_POST)) {	// Statistiques des services
+elseif (array_key_exists('stats-units',$_POST)) {	// Statistics for entities
 	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
 	$res=pg_query_params("select direction,seminaire.score((select count(*) from seminaire.answers inner join seminaire.agents on answers.cd_agent=agents.cd_agent inner join seminaire.questions on questions.cd_question=answers.cd_question where answers.answer=questions.right_answer and agents.direction=ag.direction and cd_game=$1)::integer,(select count(*) from seminaire.answers inner join seminaire.agents on answers.cd_agent=agents.cd_agent inner join seminaire.questions on questions.cd_question=answers.cd_question where answers.answer!=questions.right_answer and agents.direction=ag.direction and cd_game=$1)::integer) as score from seminaire.agents as ag group by direction order by direction;",array($_POST['stats-units'])) or die('Request failed: '.pg_last_error());
 	$answers=pg_fetch_all($res);
@@ -128,7 +126,7 @@ elseif (array_key_exists('stats-units',$_POST)) {	// Statistiques des services
 	pg_free_result($res);
 	pg_close($dbconn);
 }
-elseif (array_key_exists('best-agents',$_POST)) {	// Podium des trois agents avec les scores les plus élevés
+elseif (array_key_exists('best-agents',$_POST)) {	// Get the three highest scores and the associated players
 	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
 	$res=pg_query_params("select score,array_agg(nom) as noms from (select concat(prenom,' ',nom) as nom,seminaire.score((select count(*) from seminaire.answers inner join seminaire.questions on questions.cd_question=answers.cd_question where answers.answer=questions.right_answer and answers.cd_agent=ag.cd_agent and cd_game=$1)::integer,(select count(*) from seminaire.answers inner join seminaire.questions on questions.cd_question=answers.cd_question where answers.answer!=questions.right_answer and answers.cd_agent=ag.cd_agent and cd_game=$1)::integer) as score from seminaire.agents as ag group by cd_agent,prenom,nom) as foo group by score order by score desc limit 3;",array($_POST['best-agents'])) or die('Request failed: '.pg_last_error());
 	$answers=pg_fetch_all($res);
@@ -142,17 +140,50 @@ elseif (array_key_exists('best-agents',$_POST)) {	// Podium des trois agents ave
 	pg_free_result($res);
 	pg_close($dbconn);
 }
-elseif (array_key_exists('get_quizz',$_POST)) {	// Retourne le quizz complet
-	get_quizz(True,$_POST['get_quizz']);
+elseif (array_key_exists('get_quizz',$_POST)) {	// Return the quizz for a game with the answers
+	get_quizz(True,$_POST['get_quizz'],False);
 }
-elseif (array_key_exists('quizz',$_POST)) {	// Retourne le quizz sans les réponses
-	get_quizz(False,$_POST['quizz']);
+elseif (array_key_exists('quizz',$_POST)) {	// Return the quizz for a game without the answers
+	get_quizz(False,$_POST['quizz'],False);
 }
-elseif (array_key_exists('get-my-score',$_POST)) {	// Retourne le nombre de points d'un agent
+elseif (array_key_exists('get-questions',$_POST)) {	// Return the list of questions
+	get_quizz(True,$_POST['get-questions'],True);
+}
+elseif (array_key_exists('get-my-score',$_POST)) {	// Return the score of a player
 	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
 	$res=pg_query_params("select seminaire.score((select count(*) from seminaire.answers inner join seminaire.questions on questions.cd_question=answers.cd_question where answers.answer=questions.right_answer and answers.cd_agent=$1 and cd_game=$2)::integer,(select count(*) from seminaire.answers inner join seminaire.questions on questions.cd_question=answers.cd_question where answers.answer!=questions.right_answer and answers.cd_agent=$1 and cd_game=$2)::integer) as score;",array($_POST['get-my-score'],$_POST['game'])) or die('Request failed: '.pg_last_error());
 	$row=pg_fetch_row($res);
 	if (count($row)>0) echo $row[0];
+	pg_free_result($res);
+	pg_close($dbconn);
+}
+elseif (array_key_exists('add-question',$_POST)) {	// Add a question to the database
+	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
+	$res=pg_query_params("insert into seminaire.questions (question,answers,right_answer,explain_text,explain_link,cd_game) values ($1,$2,$3,$4,$5,$6) returning cd_question",array($_POST['question'],$_POST['answers'],$_POST['rightanswer'],$_POST['explaintext'],$_POST['explainlink'],$_POST['add-question'])) or die('Request failed: '.pg_last_error());
+	$row=pg_fetch_row($res);
+	if (count($row)>0) echo $row[0];
+	pg_free_result($res);
+	pg_close($dbconn);
+}
+elseif (array_key_exists('update-question',$_POST)) {	// Change a question in the database
+	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
+	if (array_key_exists('question',$_POST)) {
+		if (array_key_exists('answers',$_POST)) {
+			$res=pg_query_params("update seminaire.questions set question=$1,answers=$2,right_answer=$3,explain_text=$4,explain_link=$5 where cd_question=$6",array($_POST['question'],$_POST['answers'],$_POST['rightanswer'],$_POST['explaintext'],$_POST['explainlink'],$_POST['update-question'])) or die('Request failed: '.pg_last_error());
+		} else {
+			$res=pg_query_params("update seminaire.questions set question=$1 where cd_question=$2",array($_POST['question'],$_POST['update-question'])) or die('Request failed: '.pg_last_error());
+		}
+	} else {
+		$res=pg_query_params("update seminaire.questions set answers=$1,right_answer=$2,explain_text=$3,explain_link=$4 where cd_question=$5",array($_POST['answers'],$_POST['rightanswer'],$_POST['explaintext'],$_POST['explainlink'],$_POST['update-question'])) or die('Request failed: '.pg_last_error());
+	}
+	echo "OK";
+	pg_free_result($res);
+	pg_close($dbconn);
+}
+elseif (array_key_exists('delete-question',$_POST)) {	// Delete a question from the database
+	$dbconn=pg_connect("host=".$host." dbname=".$dbname." user=".$user." password=".$password) or die ('Impossible to connect to the database: '.pg_last_error());
+	$res=pg_query_params("delete from seminaire.questions where cd_question=$1",array($_POST['delete-question'])) or die('Request failed: '.pg_last_error());
+	echo "OK";
 	pg_free_result($res);
 	pg_close($dbconn);
 }

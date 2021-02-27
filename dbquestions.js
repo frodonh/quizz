@@ -1,11 +1,12 @@
 let popupopened=false;
-let questions={};
+let quizz={};
+let questions=null;
 let questions_index=[];
 let selected_question=null;
 let save_onkeydown;
 
 /*******************************************
- *            GUI components               *
+ *           Popup management              *
  *******************************************/
 function open_popup(id,title,callback) {
 	if (popupopened) return;
@@ -21,11 +22,6 @@ function open_popup(id,title,callback) {
 	popup.style.maxHeight='0px';
 	popup.style.display='block';
 	popup.style.overflow='hidden'; 
-	let tfield=popup.getElementsByTagName('input')[0];
-	if (tfield) {
-		tfield.focus();
-		tfield.select();
-	}
 	if (title) popup.getElementsByTagName('h2')[0].innerHTML=title;
 	popup.getElementsByTagName('input')[0].value='';
 	setTimeout(function() { 
@@ -33,6 +29,11 @@ function open_popup(id,title,callback) {
 		popup.addEventListener('transitionend',function() {
 			popup.querySelectorAll('button,input,select').forEach((el)=>el.disabled=false);
 			popup.style.overflow='auto';
+			let tfield=popup.getElementsByTagName('input')[0];
+			if (tfield) {
+				tfield.focus();
+				tfield.select();
+			}
 			popupopened=popup;
 		},{'once':true});
 		overlay.style.opacity='0.5'; }
@@ -47,13 +48,8 @@ function close_popup(callback=null) {
 	let popup=popupopened;
 	popup.querySelectorAll('button,input,select').forEach((el)=>el.disabled=true);
 	let overlay=document.getElementById('overlay');
-	if (callback) {
-		overlay.style.display='none';
-		popup.style.display='none';
-	} else {
-		overlay.addEventListener('transitionend',() => overlay.style.display='none',{'once':true});
-		popup.addEventListener('transitionend',() => popup.style.display='none',{'once':true});
-	}
+	overlay.addEventListener('transitionend',() => overlay.style.display='none',{'once':true});
+	popup.addEventListener('transitionend',() => popup.style.display='none',{'once':true});
 	overlay.style.opacity='0';
 	popup.style.overflow='hidden';
 	popup.style.maxHeight='0px';
@@ -61,9 +57,8 @@ function close_popup(callback=null) {
 	if (callback) callback(popup.getElementsByTagName('input')[0].value);
 }
 
-
 /*******************************************
- *              GUI actions                *
+ *            Question editor              *
  *******************************************/
 var question_sort= { "column":"", "order":0 };
 
@@ -91,9 +86,6 @@ function sort_column(event) {
 	create_questions_table();
 }
 
-function newquestion(sender) {
-}
-
 function click_option(sender) {
 	let table=document.getElementById('tanswers').children[0];
 	let deselect=sender.currentTarget.classList.contains('selected');
@@ -107,15 +99,20 @@ function update_question_form() {
 	let table=document.getElementById('tanswers').children[0];
 	table.innerHTML='';
 	let i=0;
-	for (const opt of questions[selected_question].options) {
+	const qu=questions[selected_question];
+	for (const opt of qu.options) {
 		let tr=document.createElement('tr');
-		if (i==questions[selected_question].right_answer) tr.classList.add('rightanswer');
+		if (i==qu.right_answer) tr.classList.add('rightanswer');
 		tr.addEventListener('click',click_option);
 		let td=document.createElement('td');
 		td.textContent=opt;
 		tr.appendChild(td);
 		table.appendChild(tr);
 		++i;
+	}
+	if (qu.explain) {
+		document.getElementById('explaintext').value=qu.explain.text;
+		document.getElementById('explainlink').value=qu.explain.link;
 	}
 }
 
@@ -145,7 +142,7 @@ function answer_down() {
 function answer_new() {
 	open_popup('textinput','Nouvelle option',function(value) {
 		let tbody=document.getElementById('tanswers').children[0];
-		if (value=='') return;
+		if (value=='' | tbody.children.length>=6) return;
 		let tr=document.createElement('tr');
 		tr.addEventListener('click',click_option);
 		let td=document.createElement('td');
@@ -170,6 +167,52 @@ function answer_check() {
 	}
 }
 
+function save_options() {
+	if (selected_question==null) return;
+	let tbody=document.getElementById('tanswers').children[0];
+	let qu=questions[selected_question];
+	qu.options=[];
+	qu.right_answer=null;
+	if (!qu.explain) qu.explain={'text':'','link':''};
+	qu.explain.text=document.getElementById('explaintext').value;
+	qu.explain.link=document.getElementById('explainlink').value;
+	let i=0;
+	Array.from(tbody.getElementsByTagName('tr')).forEach(function(tr) {
+		qu.options.push(tr.children[0].textContent);
+		if (tr.classList.contains('rightanswer')) qu.right_answer=i;
+		++i;
+	});
+	let xhttp=new XMLHttpRequest();
+	xhttp.open('POST','quizz.php',true);
+	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+	xhttp.onload=function() {
+		if (!this.responseText.startsWith('OK')) return;
+		create_questions_table();
+		close_options();
+	}
+	let query='update-question='+selected_question;
+	if (qu.right_answer!=null) query+='&rightanswer='+qu.right_answer;
+	if (qu.explain.text!='') query+='&explaintext='+encodeURIComponent(qu.explain.text);
+	if (qu.explain.link!='') query+='&explainlink='+encodeURIComponent(qu.explain.link);
+	query+="&answers=";
+	let qanswers='';
+	i=0;
+	for (const opt of qu.options) {
+		if (i==0) qanswers='{'; else qanswers+=',';
+		qanswers+=opt;
+		++i;
+	}
+	qanswers+='}';
+	query+=encodeURIComponent(qanswers);
+	xhttp.send(query);
+}
+
+function close_options() {
+	Array.from(document.getElementById('tquestions').getElementsByTagName('tr')).forEach((tr)=>tr.classList.remove('selected'));
+	selected_question=null;
+	document.getElementById('editquestion').classList.remove('shown');
+}
+
 function openquestion(sender) {
 	// Highlight the selected line
 	let deselect=sender.currentTarget.classList.contains('selected');
@@ -186,15 +229,82 @@ function openquestion(sender) {
 	update_question_form();
 }
 
+function create_question_row(questionid) {
+	let tr=document.createElement('tr');
+	tr.addEventListener('click',openquestion);
+	tr.dataset['id']=questionid;
+	let tdd=document.createElement('td');
+	tdd.innerHTML='<button type="button" class="small" onclick="question_update(event)"><img src="edit.svg" /></button><button type="button" class="small" onclick="question_delete(event)"><img src="remove.svg" /></button>';
+	tr.appendChild(tdd);
+	for (const [col,descr] of Object.entries(question_fields)) {
+		let td=document.createElement('td');
+		if (descr.classlist) for (const a of descr.classlist) td.classList.add(a);
+		td.innerText=questions[questionid][col];
+		tr.appendChild(td);
+	}
+	return tr;
+}
+
+function question_new() {
+	open_popup('textinput','Nouvelle question',function(value) {
+		if (value=='') return;
+		let xhttp=new XMLHttpRequest();
+		xhttp.open('POST','quizz.php',true);
+		xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+		xhttp.onload=function() {
+			const id=this.responseText;
+			questions[id]={'question':value,'options':[]};
+			let tbody=document.getElementById('tquestions').getElementsByTagName('tbody')[0];
+			questions_index.push(id);
+			tbody.appendChild(create_question_row(id));
+		}
+		xhttp.send('add-question='+game+'&question='+encodeURIComponent(value)+"&answers={}");
+	});
+}
+
+function question_delete(event) {
+	event.stopPropagation();
+	let tr=event.target.closest('tr');
+	let id=tr.dataset['id'];
+	let xhttp=new XMLHttpRequest();
+	xhttp.open('POST','quizz.php',true);
+	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+	xhttp.onload=function() {
+		if (!this.responseText.startsWith('OK')) return;
+		delete questions[id];
+		let indexid=questions_index.findIndex((el)=>el==id);
+		questions_index.splice(indexid,1);
+		tr.parentNode.removeChild(tr);
+	}
+	xhttp.send('delete-question='+id);
+}
+
+function question_update(event) {
+	event.stopPropagation();
+	open_popup('textinput','Modifier la question',function(value) {
+		let tr=event.target.closest('tr');
+		let id=tr.dataset['id'];
+		let xhttp=new XMLHttpRequest();
+		xhttp.open('POST','quizz.php',true);
+		xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+		xhttp.onload=function() {
+			if (!this.responseText.startsWith('OK')) return;
+			questions[id].question=value;
+			tr.getElementsByTagName('td')[1].textContent=value;
+		}
+		xhttp.send('update-question='+id+'&question='+decodeURIComponent(value));
+	});
+}
+
 function create_questions_table() {
-	if (questions_index.length==0) for (const id of Object.keys(questions)) questions_index.push(id);
+	if (questions_index.length==0) for (const [id,qu] of Object.entries(questions)) if (qu.cd_game==game) questions_index.push(id);
 	let tab=document.getElementById('tquestions');
 	tab.innerHTML='';
 	let head=document.createElement('thead');
 	let tr=document.createElement('tr');
 	let tha=document.createElement('th');
 	tha.classList.add('tools');
-	tha.innerHTML='<button class="small" type="button" title="Ajouter" onclick="newquestion(this)"><img src="add.svg" /></button>';
+	tha.innerHTML='<button class="small" type="button" title="Ajouter" onclick="question_new()"><img src="add.svg" /></button>';
 	tr.appendChild(tha);
 	for (const [col,descr] of Object.entries(question_fields)) {
 		let th=document.createElement('th');
@@ -211,39 +321,124 @@ function create_questions_table() {
 	tab.appendChild(head);
 	let body=document.createElement('tbody');
 	tab.appendChild(body);
-	for (const question of questions_index) {
-		let tr=document.createElement('tr');
-		tr.addEventListener('click',openquestion);
-		tr.dataset['id']=question;
-		tr.appendChild(document.createElement('td'));
-		for (const [col,descr] of Object.entries(question_fields)) {
-			let td=document.createElement('td');
-			if (descr.classlist) for (const a of descr.classlist) td.classList.add(a);
-			td.innerText=questions[question][col];
-			tr.appendChild(td);
-		}
-		body.appendChild(tr);
+	for (const question of questions_index) body.appendChild(create_question_row(question));
+}
+
+/*******************************************
+ *              Game editor                *
+ *******************************************/
+function selection_to() {
+	let sel=document.getElementById('avquestions').querySelectorAll('tr.selected')[0];
+	if (sel!=null) {
+		document.getElementById('selquestions').children[0].appendChild(sel);
+		sel.scrollIntoView();
 	}
 }
 
+function selection_from() {
+	let sel=document.getElementById('selquestions').querySelectorAll('tr.selected')[0];
+	if (sel!=null) {
+		document.getElementById('avquestions').children[0].appendChild(sel);
+		sel.scrollIntoView();
+	}
+}
+
+function selection_up() {
+	let tbody=document.getElementById('selquestions').children[0];
+	let sel=tbody.querySelectorAll('tr.selected')[0];
+	if (sel!=null) {
+		let prev=sel.previousSibling;
+		if (prev!=null) tbody.insertBefore(sel,prev);
+		sel.scrollIntoView();
+	}
+}
+
+function selection_down() {
+	let tbody=document.getElementById('selquestions').children[0];
+	let sel=tbody.querySelectorAll('tr.selected')[0];
+	if (sel!=null) {
+		let next=sel.nextSibling;
+		if (next!=null) tbody.insertBefore(next,sel);
+		sel.scrollIntoView();
+	}
+}
+
+function selection_toggle(event) {
+	Array.from(event.currentTarget.closest('div.seltables').getElementsByTagName('tr')).forEach((el)=>{if (el!=event.currentTarget) el.classList.remove('selected')});
+	event.currentTarget.classList.toggle('selected');
+}
+
+function game_update() {
+	let baseuri=window.location.protocol+'//'+window.location.hostname;
+	if (location.port!='') baseuri+=':'+location.port;
+	baseuri+=window.location.pathname.replace(/(.*)\/[^/]*$/,'$1/');
+	document.getElementById('quizzurl').value=baseuri+'quizz.htm?game='+game;
+	document.getElementById('playerurl').value=baseuri+'qpc.htm?game='+game;
+	document.getElementById('adminurl').value=baseuri+'dbquestions.htm?game='+game;
+	document.getElementById('quizzname').value=quizz.name;
+	let tbody=document.getElementById('avquestions').children[0];
+	let tsbody=document.getElementById('selquestions').children[0];
+	for (const [key,qu] of Object.entries(questions)) if (!quizz.setquestions.includes(parseInt(key))) {
+		let tr=document.createElement('tr');
+		tr.dataset['id']=key;
+		tr.addEventListener('click',selection_toggle);
+		let td=document.createElement('td');
+		td.textContent=qu.question;
+		tr.appendChild(td);
+		tbody.appendChild(tr);
+	}
+	for (const key of quizz.setquestions) {
+		let tr=document.createElement('tr');
+		tr.dataset['id']=key;
+		tr.addEventListener('click',selection_toggle);
+		let td=document.createElement('td');
+		td.textContent=questions[key].question;
+		tr.appendChild(td);
+		tsbody.appendChild(tr);
+	}
+}
+
+/*******************************************
+ *          General GUI functions          *
+ *******************************************/
+function to_section(froms,tos,fromright) {
+	let currentsection=document.getElementById(froms);
+	let newsection=document.getElementById(tos);
+	newsection.style.left=fromright?'100vw':'-100vw';
+	newsection.style.visibility='visible';
+	newsection.style.transition='left 1s ease-in-out';
+	currentsection.style.transition='left 1s ease-in-out';
+	newsection.addEventListener('transitionend',function() {
+		newsection.style.transition='unset';
+		currentsection.style.transition='unset';
+		currentsection.visibility='hidden';
+	},{'once':true});
+	setTimeout(function() {
+		newsection.style.left='0vw';
+		currentsection.style.left=fromright?'-100vw':'100vw';
+	},50);
+}
+
 document.addEventListener("DOMContentLoaded",function() {
-	// Add responsive dropdown button for menu bars, to give access to options hidden when the screen is not wide enough
-	document.querySelectorAll('section>header>nav>ul').forEach(function(el) {
-		let btn=document.createElement('button');
-		btn.onclick=()=>el.parentNode.classList.toggle('open');
-		Array.from(el.getElementsByTagName('li')).forEach(function(li) {
-			li.addEventListener('click',()=>el.parentNode.classList.toggle('open'));
-		});
-		el.insertBefore(btn,el.firstChild);
-	});
+	// Get game UUID from query string
+	let querys=decodeURI(location.search.substr(1)).split('&');
+	let parameters=[];
+	for (let i=0;i<querys.length;++i) {
+		let varval=querys[i].split('=');
+		parameters[varval[0]]=varval[1];
+	}
+	game='1';
+	if ('game' in parameters && parameters['game']!='') game=parameters['game'];
 	// Load questions
 	let xhttp=new XMLHttpRequest();
 	xhttp.open('POST','quizz.php',true);
 	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 	xhttp.onload=function() {
-		questions=JSON.parse(this.responseText);
+		quizz=JSON.parse(this.responseText);
+		questions=quizz['questions'];
+		game_update();
 		create_questions_table();
 	}
-	xhttp.send('get_quizz=0');
+	xhttp.send('get-questions='+game);
 });
 

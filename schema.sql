@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.5 (Ubuntu 12.5-0ubuntu0.20.04.1)
--- Dumped by pg_dump version 12.5 (Ubuntu 12.5-0ubuntu0.20.04.1)
+-- Dumped from database version 12.6 (Ubuntu 12.6-0ubuntu0.20.04.1)
+-- Dumped by pg_dump version 12.6 (Ubuntu 12.6-0ubuntu0.20.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -17,6 +17,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 ALTER TABLE IF EXISTS ONLY seminaire.state DROP CONSTRAINT IF EXISTS state_game_fkey;
+ALTER TABLE IF EXISTS ONLY seminaire.questions DROP CONSTRAINT IF EXISTS questions_game_fkey;
 ALTER TABLE IF EXISTS ONLY seminaire.answers DROP CONSTRAINT IF EXISTS answers_question_fkey;
 ALTER TABLE IF EXISTS ONLY seminaire.answers DROP CONSTRAINT IF EXISTS answers_game_fkey;
 ALTER TABLE IF EXISTS ONLY seminaire.answers DROP CONSTRAINT IF EXISTS answers_agent_fkey;
@@ -25,7 +26,6 @@ ALTER TABLE IF EXISTS ONLY seminaire.games DROP CONSTRAINT IF EXISTS games_pkey;
 ALTER TABLE IF EXISTS ONLY seminaire.answers DROP CONSTRAINT IF EXISTS answers_pkey;
 ALTER TABLE IF EXISTS ONLY seminaire.agents DROP CONSTRAINT IF EXISTS agents_pkey;
 ALTER TABLE IF EXISTS seminaire.questions ALTER COLUMN cd_question DROP DEFAULT;
-ALTER TABLE IF EXISTS seminaire.games ALTER COLUMN cd_game DROP DEFAULT;
 ALTER TABLE IF EXISTS seminaire.agents ALTER COLUMN cd_agent DROP DEFAULT;
 DROP TABLE IF EXISTS seminaire.state;
 DROP SEQUENCE IF EXISTS seminaire.questions_id_seq;
@@ -123,7 +123,7 @@ CREATE TABLE seminaire.answers (
     cd_agent integer NOT NULL,
     cd_question integer NOT NULL,
     answer integer,
-    cd_game integer NOT NULL
+    cd_game text NOT NULL
 );
 
 
@@ -132,9 +132,10 @@ CREATE TABLE seminaire.answers (
 --
 
 CREATE TABLE seminaire.games (
-    cd_game integer NOT NULL,
+    cd_game text DEFAULT uuid_in((md5(((random())::text || (clock_timestamp())::text)))::cstring) NOT NULL,
     questions integer[],
-    name text
+    name text,
+    pkey text DEFAULT uuid_in((md5(((random())::text || (clock_timestamp())::text)))::cstring)
 );
 
 
@@ -169,7 +170,8 @@ CREATE TABLE seminaire.questions (
     explain_text text,
     explain_link text,
     media text,
-    explain_media text
+    explain_media text,
+    cd_game text
 );
 
 
@@ -197,7 +199,7 @@ ALTER SEQUENCE seminaire.questions_id_seq OWNED BY seminaire.questions.cd_questi
 --
 
 CREATE TABLE seminaire.state (
-    cd_game integer NOT NULL,
+    cd_game text NOT NULL,
     val character varying(5)
 );
 
@@ -207,13 +209,6 @@ CREATE TABLE seminaire.state (
 --
 
 ALTER TABLE ONLY seminaire.agents ALTER COLUMN cd_agent SET DEFAULT nextval('seminaire.agents_id_seq'::regclass);
-
-
---
--- Name: games cd_game; Type: DEFAULT; Schema: seminaire; Owner: -
---
-
-ALTER TABLE ONLY seminaire.games ALTER COLUMN cd_game SET DEFAULT nextval('seminaire.games_id_seq'::regclass);
 
 
 --
@@ -260,7 +255,7 @@ ALTER TABLE ONLY seminaire.questions
 --
 
 ALTER TABLE ONLY seminaire.answers
-    ADD CONSTRAINT answers_agent_fkey FOREIGN KEY (cd_agent) REFERENCES seminaire.agents(cd_agent);
+    ADD CONSTRAINT answers_agent_fkey FOREIGN KEY (cd_agent) REFERENCES seminaire.agents(cd_agent) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -268,7 +263,7 @@ ALTER TABLE ONLY seminaire.answers
 --
 
 ALTER TABLE ONLY seminaire.answers
-    ADD CONSTRAINT answers_game_fkey FOREIGN KEY (cd_game) REFERENCES seminaire.games(cd_game);
+    ADD CONSTRAINT answers_game_fkey FOREIGN KEY (cd_game) REFERENCES seminaire.games(cd_game) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -276,7 +271,15 @@ ALTER TABLE ONLY seminaire.answers
 --
 
 ALTER TABLE ONLY seminaire.answers
-    ADD CONSTRAINT answers_question_fkey FOREIGN KEY (cd_question) REFERENCES seminaire.questions(cd_question);
+    ADD CONSTRAINT answers_question_fkey FOREIGN KEY (cd_question) REFERENCES seminaire.questions(cd_question) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: questions questions_game_fkey; Type: FK CONSTRAINT; Schema: seminaire; Owner: -
+--
+
+ALTER TABLE ONLY seminaire.questions
+    ADD CONSTRAINT questions_game_fkey FOREIGN KEY (cd_game) REFERENCES seminaire.games(cd_game) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -284,7 +287,7 @@ ALTER TABLE ONLY seminaire.answers
 --
 
 ALTER TABLE ONLY seminaire.state
-    ADD CONSTRAINT state_game_fkey FOREIGN KEY (cd_game) REFERENCES seminaire.games(cd_game);
+    ADD CONSTRAINT state_game_fkey FOREIGN KEY (cd_game) REFERENCES seminaire.games(cd_game) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
