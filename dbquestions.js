@@ -373,11 +373,13 @@ function game_update() {
 	if (location.port!='') baseuri+=':'+location.port;
 	baseuri+=window.location.pathname.replace(/(.*)\/[^/]*$/,'$1/');
 	document.getElementById('quizzurl').value=baseuri+'quizz.htm?game='+game;
-	document.getElementById('playerurl').value=baseuri+'qpc.htm?game='+game;
+	document.getElementById('playerurl').value=baseuri+'qpc.htm?game='+quizz.pkey;
 	document.getElementById('adminurl').value=baseuri+'dbquestions.htm?game='+game;
 	document.getElementById('quizzname').value=quizz.name;
 	let tbody=document.getElementById('avquestions').children[0];
+	tbody.innerHTML='';
 	let tsbody=document.getElementById('selquestions').children[0];
+	tsbody.innerHTML='';
 	for (const [key,qu] of Object.entries(questions)) if (!quizz.setquestions.includes(parseInt(key))) {
 		let tr=document.createElement('tr');
 		tr.dataset['id']=key;
@@ -396,6 +398,27 @@ function game_update() {
 		tr.appendChild(td);
 		tsbody.appendChild(tr);
 	}
+}
+
+function game_register() {
+	quizz.name=document.getElementById('quizzname').value;
+	quizz.setquestions=[];
+	Array.from(document.getElementById('selquestions').querySelectorAll('tr')).forEach((tr)=>quizz.setquestions.push(tr.dataset['id']));
+}
+
+function game_save(event) {
+	let btn=event.currentTarget;
+	let xhttp=new XMLHttpRequest();
+	xhttp.open('POST','quizz.php',true);
+	xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+	xhttp.onload=function() {
+		if (!this.responseText.startsWith('OK')) return;
+		btn.classList.add('validated');
+		btn.disabled=true;
+		setTimeout(()=>{btn.classList.remove('validated');btn.disabled=false;},2000);
+	}
+	game_register();
+	xhttp.send('update-game='+game+'&name='+encodeURIComponent(quizz.name)+'&questions='+encodeURIComponent('{'+quizz.setquestions.join(',')+'}'));
 }
 
 /*******************************************

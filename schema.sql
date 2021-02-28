@@ -21,6 +21,8 @@ ALTER TABLE IF EXISTS ONLY seminaire.questions DROP CONSTRAINT IF EXISTS questio
 ALTER TABLE IF EXISTS ONLY seminaire.answers DROP CONSTRAINT IF EXISTS answers_question_fkey;
 ALTER TABLE IF EXISTS ONLY seminaire.answers DROP CONSTRAINT IF EXISTS answers_game_fkey;
 ALTER TABLE IF EXISTS ONLY seminaire.answers DROP CONSTRAINT IF EXISTS answers_agent_fkey;
+DROP INDEX IF EXISTS seminaire.games_pkey_idx;
+ALTER TABLE IF EXISTS ONLY seminaire.state DROP CONSTRAINT IF EXISTS state_unique_game;
 ALTER TABLE IF EXISTS ONLY seminaire.questions DROP CONSTRAINT IF EXISTS questions_pkey;
 ALTER TABLE IF EXISTS ONLY seminaire.games DROP CONSTRAINT IF EXISTS games_pkey;
 ALTER TABLE IF EXISTS ONLY seminaire.answers DROP CONSTRAINT IF EXISTS answers_pkey;
@@ -248,6 +250,21 @@ ALTER TABLE ONLY seminaire.games
 
 ALTER TABLE ONLY seminaire.questions
     ADD CONSTRAINT questions_pkey PRIMARY KEY (cd_question);
+
+
+--
+-- Name: state state_unique_game; Type: CONSTRAINT; Schema: seminaire; Owner: -
+--
+
+ALTER TABLE ONLY seminaire.state
+    ADD CONSTRAINT state_unique_game UNIQUE (cd_game);
+
+
+--
+-- Name: games_pkey_idx; Type: INDEX; Schema: seminaire; Owner: -
+--
+
+CREATE INDEX games_pkey_idx ON seminaire.games USING btree (pkey);
 
 
 --

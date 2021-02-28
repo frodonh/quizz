@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Créateur de quizz</title>
+	<link rel="stylesheet" href="styles.css">
+	<script>
+		function create_game() {
+			let game=document.getElementById('quizzname').value;
+			let xhttp=new XMLHttpRequest();
+			xhttp.open('POST','quizz.php',true);
+			xhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+			xhttp.onload=function() {
+				quizz=JSON.parse(this.responseText);
+				location.href="dbquestions.htm?game="+quizz.cd_game;
+			}
+			xhttp.send('create-game='+encodeURIComponent(game));
+		}
+	</script>
+</head>
+<body>
+	<form id="login" autocomplete="off">
+		<input type="text" id="quizzname" placeholder="Mon nouveau quizz" size="50"></input>
+		<button id="ok" type="button" onclick="create_game()">Créer un nouveau quizz</button>
+	</form>
+</body>
+</html>
+

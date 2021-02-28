@@ -34,7 +34,7 @@
 				<button type="button" class="small" title="Retirer de la sélection" onclick="selection_from()"><img src="leftarrow.svg" /></button>
 				<button type="button" class="small" title="Monter" onclick="selection_up()"><img src="uparrow.svg" /></button>
 				<button type="button" class="small" title="Descendre" onclick="selection_down()"><img src="downarrow.svg" /></button>
-				<button type="button" class="small" title="Éditer les questions" onclick="to_section('game-editor','question-editor',true)"><img src="edit.svg" /></button>
+				<button type="button" class="small" title="Éditer les questions" onclick="game_register();to_section('game-editor','question-editor',true)"><img src="edit.svg" /></button>
 			</div>
 			<div class="seltable">
 				<p>Questions sélectionnées</p>
@@ -45,9 +45,12 @@
 				</div>
 			</div>
 		</div>
+		<div class="buttons">
+			<button type="button" onclick="game_save(event)">Enregistrer le jeu</button>
+		</div>
 	</section>
 	<section id="question-editor">
-		<button type="button" class="small back" onclick="to_section('question-editor','game-editor',false)">x</button>
+		<button type="button" class="small back" onclick="to_section('question-editor','game-editor',false);game_update()">x</button>
 		<header>
 			<h1>Éditer les questions</h1>
 		</header>
