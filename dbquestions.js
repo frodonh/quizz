@@ -6,6 +6,13 @@ let selected_question=null;
 let save_onkeydown;
 
 /*******************************************
+ *          Utility functions              *
+ *******************************************/
+function encode_psql_string(s) {
+	return '"'+String(s).replace('\\','\\\\').replace('"','\\"')+'"';
+}
+
+/*******************************************
  *           Popup management              *
  *******************************************/
 function open_popup(id,title,callback) {
@@ -194,16 +201,8 @@ function save_options() {
 	if (qu.right_answer!=null) query+='&rightanswer='+qu.right_answer;
 	if (qu.explain.text!='') query+='&explaintext='+encodeURIComponent(qu.explain.text);
 	if (qu.explain.link!='') query+='&explainlink='+encodeURIComponent(qu.explain.link);
-	query+="&answers=";
-	let qanswers='';
-	i=0;
-	for (const opt of qu.options) {
-		if (i==0) qanswers='{'; else qanswers+=',';
-		qanswers+=opt;
-		++i;
-	}
-	qanswers+='}';
-	query+=encodeURIComponent(qanswers);
+	let qanswers='{'+qu.options.map(encode_psql_string).join(',')+'}';
+	query+="&answers="+encodeURIComponent(qanswers);
 	xhttp.send(query);
 }
 

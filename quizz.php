@@ -1,6 +1,13 @@
 <?php
 require 'login.php';
 
+function decode_array($s) {
+	$s=str_replace('"','\\"',$s);
+	$s='["'.$s.'"]';
+	$s=str_replace('|','","',$s);
+	return json_decode($s);
+}
+
 function get_quizz($full,$id,$admin) {
 	global $host;
 	global $dbname;
@@ -15,17 +22,15 @@ function get_quizz($full,$id,$admin) {
 		pg_free_result($res);
 	}
 	if ($admin) {
-		$res=pg_query_params("select cd_question,question,answers as options,right_answer,explain_text,explain_link,explain_media,media,cd_game from seminaire.questions where cd_game is null or cd_game=$1",array($id)) or die('Request failed: '.pg_last_error());
+		$res=pg_query_params("select cd_question,question,array_to_string(answers,'|') as options,right_answer,explain_text,explain_link,explain_media,media,cd_game from seminaire.questions where cd_game is null or cd_game=$1",array($id)) or die('Request failed: '.pg_last_error());
 	} elseif ($full) {
-			$res=pg_query_params("select cd_question,question,answers as options,right_answer,explain_text,explain_link,explain_media,media from (select questions[nr] as que,nr from (select *,generate_subscripts(questions,1) as nr from seminaire.games where cd_game=$1) t) as qu inner join seminaire.questions on questions.cd_question=que order by nr;",array($id)) or die('Request failed: '.pg_last_error());
+			$res=pg_query_params("select cd_question,question,array_to_string(answers,'|') as options,right_answer,explain_text,explain_link,explain_media,media from (select questions[nr] as que,nr from (select *,generate_subscripts(questions,1) as nr from seminaire.games where cd_game=$1) t) as qu inner join seminaire.questions on questions.cd_question=que order by nr;",array($id)) or die('Request failed: '.pg_last_error());
 	} else {
-		$res=pg_query_params("select cd_question,question,answers as options from (select questions[nr] as que,nr from (select *,generate_subscripts(questions,1) as nr from seminaire.games where pkey=$1) t) as qu inner join seminaire.questions on questions.cd_question=que order by nr;",array($id)) or die('Request failed: '.pg_last_error());
+		$res=pg_query_params("select cd_question,question,array_to_string(answers,'|') as options from (select questions[nr] as que,nr from (select *,generate_subscripts(questions,1) as nr from seminaire.games where pkey=$1) t) as qu inner join seminaire.questions on questions.cd_question=que order by nr;",array($id)) or die('Request failed: '.pg_last_error());
 	}
 	$quizz=pg_fetch_all($res);
 	foreach ($quizz as $key=>$question) {
-		$quizz[$key]['options'][0]='[';
-		$quizz[$key]['options'][strlen($quizz[$key]['options'])-1]=']';
-		$quizz[$key]['options']=json_decode($quizz[$key]['options']);
+		$quizz[$key]['options']=decode_array($quizz[$key]['options']);
 		if ($full || $admin) {
 			if (($quizz[$key]['explain_text']!=NULL && $quizz[$key]['explain_text']!='') || ($quizz[$key]['explain_media']!=NULL && $quizz[$key]['explain_media']!='')) {
 				$quizz[$key]['explain']=array("text"=>$quizz[$key]['explain_text'],"link"=>$quizz[$key]['explain_link'],"media"=>$quizz[$key]['explain_media']);
